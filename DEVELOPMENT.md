@@ -1,79 +1,81 @@
-# Development Guide
+# 開発ガイド
 
-## Hot Reloading Setup
+## ホットリローディングのセットアップ
 
-This project now includes proper hot reloading for browser extension development.
+このプロジェクトには、ブラウザ拡張機能開発のための適切なホットリローディングが含まれています。
 
-### Quick Start
+### クイックスタート
 
-1. **Start development mode:**
+1. **開発モードを開始:**
    ```bash
    npm run dev
    ```
 
-2. **Load the extension in Chrome:**
-   - Open Chrome and go to `chrome://extensions/`
-   - Enable "Developer mode" (toggle in top right)
-   - Click "Load unpacked" and select the `dist` folder from this project
-   - The extension will now be loaded and ready to use
+2. **Chromeで拡張機能を読み込む:**
+   - Chromeを開き、`chrome://extensions/` にアクセス
+   - 「デベロッパーモード」を有効化（右上のトグル）
+   - 「パッケージ化されていない拡張機能を読み込む」をクリックし、このプロジェクトの `dist` フォルダを選択
+   - これで拡張機能が読み込まれ、使用準備が整います
 
-3. **Making changes:**
-   - Edit any file in the `src/` directory
-   - Save the file
-   - Vite will automatically rebuild the extension
-   - Click the refresh icon on your extension card in `chrome://extensions/`
-   - Your changes will now be visible!
+3. **変更を行う:**
+   - `src/` ディレクトリの任意のファイルを編集
+   - ファイルを保存
+   - Viteが自動的に拡張機能をリビルド
+   - `chrome://extensions/` の拡張機能カードで更新アイコンをクリック
+   - これで変更が表示されます！
 
-### Available Scripts
+### 利用可能なスクリプト
 
-- `npm run dev` - Start development mode with file watching and auto-rebuild
-- `npm run build` - Build the extension for production
-- `npm run dev:serve` - Start Vite dev server (for web development, not extension)
-- `npm run copy-static` - Copy static files from public/ to dist/
+- `npm run dev` - ファイル監視と自動リビルドによる開発モードを開始
+- `npm run build` - 本番用に拡張機能をビルド
+- `npm run dev:serve` - Vite開発サーバーを開始（拡張機能ではなくウェブ開発用）
+- `npm run copy-static` - public/ から dist/ に静的ファイルをコピー
 
-### How It Works
+### 仕組み
 
-The development setup:
+開発セットアップ:
 
-1. **Copies static files** from `public/` to `dist/` (manifest.json, HTML files, icons)
-2. **Compiles TypeScript** files
-3. **Builds with Vite** in watch mode, outputting to `dist/`
-4. **Watches for changes** and rebuilds automatically
+1. **静的ファイルをコピー** - `public/` から `dist/` へ（manifest.json、HTMLファイル、アイコン）
+2. **TypeScriptファイルをコンパイル**
+3. **Viteで監視モードでビルド** - `dist/` に出力
+4. **変更を監視** し、自動的にリビルド
 
-### File Structure
+### ファイル構造
 
 ```
-dist/                 # Built extension files (load this in Chrome)
-├── manifest.json     # Extension manifest
-├── background.js     # Background script
-├── sidepanel.js      # Side panel script
-├── options.js        # Options page script
-├── sidepanel.html    # Side panel HTML
-├── options.html      # Options page HTML
-├── assets/           # CSS and other assets
-└── icons/            # Extension icons
+dist/                 # ビルドされた拡張ファイル（Chromeで読み込む）
+├── manifest.json     # 拡張機能マニフェスト
+├── background.js     # バックグラウンドスクリプト
+├── sidepanel.js      # サイドパネルスクリプト
+├── options.js        # オプションページスクリプト
+├── sidepanel.html    # サイドパネルHTML
+├── options.html      # オプションページHTML
+├── assets/           # CSSとその他のアセット
+└── icons/            # 拡張機能アイコン
 ```
 
-### Troubleshooting
+### トラブルシューティング
 
-**Changes not appearing?**
-1. Make sure you clicked the refresh icon on the extension card
-2. Check the terminal for build errors
-3. Try reloading the extension completely (remove and re-add)
+**変更が表示されない？**
 
-**Build errors?**
-1. Check TypeScript compilation errors in the terminal
-2. Ensure all dependencies are installed: `npm install`
-3. Try cleaning and rebuilding: `rm -rf dist && npm run dev`
+1. 拡張機能カードの更新アイコンをクリックしたことを確認
+2. ターミナルでビルドエラーを確認
+3. 拡張機能を完全にリロードしてみる（削除して再追加）
 
-### Extension Reloading
+**ビルドエラー？**
 
-Unlike web applications, browser extensions require manual reloading after code changes. The workflow is:
+1. ターミナルでTypeScriptコンパイルエラーを確認
+2. すべての依存関係がインストールされていることを確認: `npm install`
+3. クリーンしてリビルド: `rm -rf dist && npm run dev`
 
-1. Make code changes
-2. Save files (Vite rebuilds automatically)
-3. Go to `chrome://extensions/`
-4. Click the refresh icon on your extension
-5. Test your changes
+### 拡張機能のリロード
 
-This is much faster than the traditional build-and-reload cycle, as the build happens automatically in the background.
+ウェブアプリケーションとは異なり、ブラウザ拡張機能はコード変更後に手動でのリロードが必要です。ワークフロー:
+
+1. コード変更を行う
+2. ファイルを保存（Viteが自動的にリビルド）
+3. `chrome://extensions/` にアクセス
+4. 拡張機能の更新アイコンをクリック
+5. 変更をテスト
+
+これは従来のビルド-リロードサイクルよりもはるかに高速で、ビルドがバックグラウンドで自動的に行われるためです。

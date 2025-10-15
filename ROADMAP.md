@@ -1,64 +1,70 @@
 [0.1.0]
-- [x] render markdown in output
-- [x] add streaming output
-- [x] add button to clear context (otherwise continue with previous context)
-- [x] tab management for deciding which tab to control
-- [x] open options.html on install
-- [x] prompt improvements e.g. to stop preempting what we're going to see when navigating to a website
-- [x] better llm rate limit handling
-- [x] decide name, add icon
-- [x] fix screenshot issue (screenshots are mostly useless right now)
-- [x] make prompt input elastic, and remove resizer
-- [x] better handling of when user cancels the debugging session
-- [x] put on github
+
+- [x] 出力でMarkdownをレンダリング
+- [x] ストリーミング出力を追加
+- [x] コンテキストをクリアするボタンを追加（それ以外は前のコンテキストを継続）
+- [x] どのタブを制御するかを決めるためのタブ管理
+- [x] インストール時にoptions.htmlを開く
+- [x] プロンプトの改善（例: ウェブサイトに移動する際に何が見えるかを先回りしないようにする）
+- [x] LLMレート制限処理の改善
+- [x] 名前を決定し、アイコンを追加
+- [x] スクリーンショットの問題を修正（スクリーンショットは現在ほとんど役に立たない）
+- [x] プロンプト入力を伸縮性にし、リサイザーを削除
+- [x] ユーザーがデバッグセッションをキャンセルしたときの処理を改善
+- [x] GitHubに公開
 
 [0.2.0]
-- [x] add "requires approval" flag to irreversible tools, and seek explicit approval from user
-- [x] better handling of multiple Chrome windows
--- [x] fix "frame detatched" error when a user reloads the extension without properly closing it/debug session first
--- [x] bug: approval dialog now appears in all windows
-- [x] add token counter
-- [x] context summarization
-- [x] code robustness and refactoring
-- [x] hygiene and marketing (readme, license, acknowledgements)
-- [x] marketing videos
-- [x] llm adaptors (config in options, show active LLM)
-    - [x] automatically refresh model list upon change in configuration
-- [x] add integration with Ollama
-- [x] task memory using indexedDB (<website, task, steps>) 
-    - [x] investigate how duplicate memories could affect agent performance, and come up with a solution to handle them if necessary
-    - [x] add memory import/export functions
-    - [x] include pre-built memories for major websites
-    - [x] ensure memories are stored/retrieved using canonical URLs (instagram.com vs www.instagram.com)
-- [x] review/write user docs
-- [x] upload to Chrome web store
-- [x] create test suite and add basic test coverage
+
+- [x] 不可逆ツールに「承認が必要」フラグを追加し、ユーザーから明示的な承認を求める
+- [x] 複数のChromeウィンドウの処理を改善
+-- [x] ユーザーが拡張機能を適切に閉じずにリロードしたときの「フレームがデタッチされた」エラーを修正
+-- [x] バグ: 承認ダイアログがすべてのウィンドウに表示される
+- [x] トークンカウンターを追加
+- [x] コンテキスト要約
+- [x] コードの堅牢性とリファクタリング
+- [x] 衛生管理とマーケティング（readme、ライセンス、謝辞）
+- [x] マーケティング動画
+- [x] LLMアダプター（オプションでの設定、アクティブなLLMを表示）
+    - [x] 設定変更時にモデルリストを自動的に更新
+- [x] Ollamaとの統合を追加
+- [x] IndexedDBを使用したタスクメモリ（<website, task, steps>）
+    - [x] 重複メモリがエージェントのパフォーマンスにどのように影響するかを調査し、必要に応じて処理するソリューションを考案
+    - [x] メモリのインポート/エクスポート機能を追加
+    - [x] 主要なウェブサイトの事前構築メモリを含む
+    - [x] メモリを正規URLで保存/取得する（`instagram.com` vs `www.instagram.com`）
+- [x] ユーザードキュメントのレビュー/作成
+- [x] Chromeウェブストアにアップロード
+- [x] テストスイートを作成し、基本的なテストカバレッジを追加
 
 [0.2.1]
 
-- [x] add support for latest Gemini 2.5 Flash & Pro
-- [x] add support for OpenAI Compatible models
-- [x] add support for Claude 4
-- [ ] enhance support for Ollama models
-    - [ ] better handling for <think> tokens when using thinking models
-    - [x] improve configuration to accept model, max tokens, etc as parameters
-- [ ] add memory management UI
-    - [ ] view all available memories
-    - [ ] delete ones not needed  
-    - [ ] sync useful memories with server
-- [ ] tab management enhancements
-    - [ ] seamlessly follow user's active tab
-- [ ] enhanced isolation across windows
-    - [ ] token tracker not isolated by window?
-- [ ] evaluate puppeteer as an alternative to playwright
-- [ ] evaluate optimisation strategies for DOM representations
-- [ ] disable prompt input during cancellation process
-- [ ] add support for tiered LLM pricing
+- [x] 最新のGemini 2.5 Flash & Proのサポートを追加
+- [x] OpenAI互換モデルのサポートを追加
+- [x] Claude 4のサポートを追加
+- [ ] Ollamaモデルのサポートを強化
+    - [ ] 思考モデル使用時の`<think>`トークンのより良い処理
+    - [x] モデル、最大トークンなどをパラメータとして受け入れる設定を改善
+- [ ] メモリ管理UIを追加
+    - [ ] 利用可能なすべてのメモリを表示
+    - [ ] 不要なものを削除
+    - [ ] 便利なメモリをサーバーと同期
+- [ ] タブ管理の強化
+    - [ ] ユーザーのアクティブタブをシームレスにフォロー
+- [ ] ウィンドウ間の強化された分離
+    - [ ] トークントラッカーがウィンドウごとに分離されていない？
+- [ ] PuppeteerをPlaywrightの代替として評価
+- [ ] DOM表現の最適化戦略を評価
+- [ ] キャンセル処理中のプロンプト入力を無効化
+- [ ] 階層化LLM価格のサポートを追加
+- [ ] チャットUIの強化
+
+[0.3.0]
 - [ ] chat UI enhancements
 
 [0.3.0]
-- [ ] add saved prompts with persistence in local DB
-- [ ] max llm calls: allow user to configure, ask for user permission to exceed
-- [ ] scheduler for recurring tasks using chrome.alarms
-- [ ] test and enhance prompt caching
-- [ ] add user memory component
+
+- [ ] ローカルDBでの永続化による保存プロンプトを追加
+- [ ] 最大LLM呼び出し: ユーザーが設定可能にし、超過時にユーザー許可を求める
+- [ ] chrome.alarmsを使用した定期タスクのスケジューラー
+- [ ] プロンプトキャッシュのテストと強化
+- [ ] ユーザーメモリコンポーネントを追加

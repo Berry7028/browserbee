@@ -1,229 +1,240 @@
 # BrowserBee 🐝
-*Your in-browser AI assistant. Control the web with natural language.*
+
+*ブラウザ内AIアシスタント。自然言語でウェブをコントロール。*
 
 [![Join our Discord](https://img.shields.io/badge/Discord-Join%20Chat-7289da?logo=discord&logoColor=white&style=for-the-badge)](https://discord.gg/RUaq9bfESj)
 
-https://github.com/user-attachments/assets/209c7042-6d54-4fce-92a7-ddf8519156c6
+`https://github.com/user-attachments/assets/209c7042-6d54-4fce-92a7-ddf8519156c6`
 
-BrowserBee is a privacy-first open source Chrome extension that lets you control your browser using natural language. It combines the power of an LLM for instruction parsing & planning, and Playwright for robust browser automation to accomplish tasks.
+BrowserBeeは、プライバシー重視のオープンソースChrome拡張機能で、自然言語を使ってブラウザをコントロールできます。LLMの力を活用して指示を解析・計画し、Playwrightを使って堅牢なブラウザ自動化を実現します。
 
-Since BrowserBee runs entirely within your browser (with the exception of the LLM), it can safely interact with logged-in websites, like your social media accounts or email, without compromising security or requiring backend infrastructure. This makes it more convenient for personal use than other "browser use" type products out there.
+BrowserBeeは完全にブラウザ内で動作するため（LLMを除く）、ソーシャルメディアアカウントやメールなどのログイン済みウェブサイトと安全に連携できます。これにより、セキュリティを損なうことなくバックエンドインフラを必要とせずに個人利用が可能になります。他の「ブラウザ使用」製品よりも便利です。
 
-## 🎲 Features 
+## 🎲 機能
 
-- Supports major LLM providers such as **Anthropic**, **OpenAI**, **Gemini**, and **Ollama** with more coming soon
-- Tracks **token use** and **price** so you know how much you're spending on each task
-- Has access to a wide range of **🕹️ browser tools** (listed below) for interacting and understanding browser state
-- Uses **Playwright** in the background which is a robust browser automation tool
-- The **memory** feature captures useful tool use sequences and stores them locally to make future use more efficient
-- The agent knows when to ask for user's **approval**, e.g. for purchases or posting updates on social media
+- **Anthropic**、**OpenAI**、**Gemini**、**Ollama**などの主要LLMプロバイダーをサポート（今後さらに追加予定）
+- 各タスクの**トークン使用量**と**料金**を追跡
+- ブラウザの状態を操作・理解するための幅広い**🕹️ ブラウザツール**（以下にリスト）にアクセス
+- 堅牢なブラウザ自動化ツールである**Playwright**をバックエンドで使用
+- **メモリ**機能で便利なツール使用シーケンスをキャプチャし、ローカルに保存して将来の効率を向上
+- エージェントはユーザーの**承認**を求めるタイミングを知っている（例: 購入やソーシャルメディアへの投稿時）
 
-## 🕹️ Supported tools
+## 🕹️ サポートされているツール
 
 <details>
-<summary><b>Navigation Tools</b></summary>
+<summary><b>ナビゲーションツール</b></summary>
 
 - **browser_navigate**
-  - Navigate the browser to a specific URL. Input must be a full URL, e.g. https://example.com
+  - ブラウザを特定のURLに移動。入力は完全なURLである必要があります（例: `https://example.com`）
 
 - **browser_wait_for_navigation**
-  - Wait until network is idle (Playwright).
+  - ネットワークがアイドルになるまで待機（Playwright）。
 
 - **browser_navigate_back**
-  - Go back to the previous page (history.back()). No input.
+  - 前のページに戻る（history.back()）。入力なし。
 
 - **browser_navigate_forward**
-  - Go forward to the next page (history.forward()). No input.
+  - 次のページに進む（history.forward()）。入力なし。
+
 </details>
 
 <details>
-<summary><b>Tab Context Tools</b></summary>
+<summary><b>タブコンテキストツール</b></summary>
 
 - **browser_get_active_tab**
-  - Returns information about the currently active tab, including its index, URL, and title.
+  - 現在アクティブなタブの情報（インデックス、URL、タイトルを含む）を返します。
 
 - **browser_navigate_tab**
-  - Navigate a specific tab to a URL. Input format: 'tabIndex|url' (e.g., '1|https://example.com')
+  - 特定のタブをURLに移動。入力形式: 'tabIndex|url'（例: '1|`https://example.com`'）
 
 - **browser_screenshot_tab**
-  - Take a screenshot of a specific tab by index. Input format: 'tabIndex[,flags]' (e.g., '1,full')
+  - インデックスで指定したタブのスクリーンショットを撮影。入力形式: 'tabIndex[,flags]'（例: '1,full'）
+
 </details>
 
 <details>
-<summary><b>Interaction Tools</b></summary>
+<summary><b>インタラクションツール</b></summary>
 
 - **browser_click**
-  - Click an element. Input may be a CSS selector or literal text to match on the page.
+  - 要素をクリック。入力はCSSセレクタまたはページ上の一致するリテラルテキスト。
 
 - **browser_type**
-  - Type text. Format: selector|text (e.g. input[name="q"]|hello)
+  - テキストを入力。形式: selector|text（例: input[name="q"]|hello）
 
 - **browser_handle_dialog**
-  - Accept or dismiss the most recent alert/confirm/prompt dialog. Input `accept` or `dismiss`. For prompt dialogs you may append `|text` to supply response text.
+  - 最新のアラート/確認/プロンプトダイアログを受け入れるか拒否。入力 `accept` または `dismiss`。プロンプトダイアログの場合は `|text` を追加して応答テキストを提供可能。
+
 </details>
 
 <details>
-<summary><b>Observation Tools</b></summary>
+<summary><b>観測ツール</b></summary>
 
 - **browser_get_title**
-  - Return the current page title.
+  - 現在のページタイトルを返します。
 
 - **browser_snapshot_dom**
-  - Capture DOM snapshot of the current page with options for selector, clean, structure, and limit.
+  - 現在のページのDOMスナップショットをキャプチャ（selector、clean、structure、limitのオプション付き）。
 
 - **browser_query**
-  - Return up to 10 outerHTML snippets for a CSS selector you provide.
+  - 指定したCSSセレクタに対して最大10個のouterHTMLスニペットを返します。
 
 - **browser_accessible_tree**
-  - Return the AX accessibility tree JSON (default: interesting‑only). Input 'all' to dump full tree.
+  - AXアクセシビリティツリーJSONを返します（デフォルト: interesting‑only）。'all' を入力すると完全なツリーをダンプ。
 
 - **browser_read_text**
-  - Return all visible text on the page, concatenated in DOM order.
+  - ページ上のすべての可視テキストをDOM順に連結して返します。
 
 - **browser_screenshot**
-  - Take a screenshot of the current page with options for full page capture.
+  - 現在のページのスクリーンショットを撮影（フルページキャプチャのオプション付き）。
+
 </details>
 
 <details>
-<summary><b>Mouse Tools</b></summary>
+<summary><b>マウスツール</b></summary>
 
 - **browser_move_mouse**
-  - Move the mouse cursor to absolute screen coordinates. Input format: `x|y` (example: `250|380`)
+  - マウスカーソルを絶対画面座標に移動。入力形式: `x|y`（例: `250|380`）
 
 - **browser_click_xy**
-  - Left‑click at absolute coordinates. Input format: `x|y` (example: `250|380`)
+  - 絶対座標で左クリック。入力形式: `x|y`（例: `250|380`）
 
 - **browser_drag**
-  - Drag‑and‑drop with the left button. Input format: `startX|startY|endX|endY` (example: `100|200|300|400`)
+  - 左ボタンでドラッグ＆ドロップ。入力形式: `startX|startY|endX|endY`（例: `100|200|300|400`）
+
 </details>
 
 <details>
-<summary><b>Keyboard Tools</b></summary>
+<summary><b>キーボードツール</b></summary>
 
 - **browser_press_key**
-  - Press a single key. Input is the key name (e.g. `Enter`, `ArrowLeft`, `a`).
+  - 単一のキーを押す。入力はキー名（例: `Enter`、`ArrowLeft`、`a`）。
 
 - **browser_keyboard_type**
-  - Type arbitrary text at the current focus location. Input is the literal text to type. Use `\n` for new lines.
+  - 現在のフォーカス位置に任意のテキストを入力。入力は入力するリテラルテキスト。改行には `\n` を使用。
+
 </details>
 
 <details>
-<summary><b>Tab Tools</b></summary>
+<summary><b>タブツール</b></summary>
 
 - **browser_tab_list**
-  - Return a list of open tabs with their indexes and URLs.
+  - 開いているタブのリストをインデックスとURL付きで返します。
 
 - **browser_tab_new**
-  - Open a new tab. Optional input = URL to navigate to (otherwise blank tab).
+  - 新しいタブを開く。オプション入力 = 移動するURL（指定しない場合は空白タブ）。
 
 - **browser_tab_select**
-  - Switch focus to a tab by index. Input = integer index from browser_tab_list.
+  - browser_tab_listのインデックスでタブにフォーカスを切り替える。入力 = 整数インデックス。
 
 - **browser_tab_close**
-  - Close a tab. Input = index to close (defaults to current tab if blank).
+  - タブを閉じる。入力 = 閉じるインデックス（空白の場合は現在のタブをデフォルト）。
+
 </details>
 
 <details>
-<summary><b>Memory Tools</b></summary>
+<summary><b>メモリツール</b></summary>
 
 - **save_memory**
-  - Save a memory of how to accomplish a specific task on a website. Use this when you want to remember a useful sequence of actions for future reference.
+  - ウェブサイトでの特定のタスク達成方法のメモリを保存。今後参照したい便利なアクションシーケンスがある場合に使用。
 
 - **lookup_memories**
-  - Look up stored memories for a specific website domain. Use this as your FIRST step when starting a task on a website to check if there are any saved patterns you can reuse.
+  - 特定のウェブサイトドメインの保存されたメモリを検索。ウェブサイトでタスクを開始する際の**最初のステップ**として、再利用可能な保存パターンを確認するために使用。
 
 - **get_all_memories**
-  - Retrieve all stored memories across all domains. Use this when you want to see all available memories.
+  - すべてのドメインの保存されたメモリをすべて取得。利用可能なすべてのメモリを確認したい場合に使用。
 
 - **delete_memory**
-  - Delete a specific memory by its ID. Use this when a memory is no longer useful or accurate.
+  - IDで特定のメモリを削除。メモリが不要になったり正確でなくなったりした場合に使用。
 
 - **clear_all_memories**
-  - Clear all stored memories. Use this with caution as it will delete all memories across all domains.
+  - すべての保存されたメモリをクリア。注意して使用してください。すべてのドメインのすべてのメモリが削除されます。
+
+## ✅ ユースケース
 </details>
 
-## ✅ Use Cases
+## ✅ ユースケース
 
-- **Social media butler**: Checks your social media accounts, summarizes notifications and messages, and helps you respond.
-- **News curator**: Gathers and summarizes the latest headlines from your preferred news sources and blogs, giving you a quick, personalized briefing.
-- **Personal assistant**: Helps with everyday tasks like reading and sending emails and messages, booking flights, finding products, and more.
-- **Research assistant**: Assists with deep dives into topics like companies, job listings, market trends, and academic publications by gathering and organizing information.
-- **Knowledge bookmarking & summarization**: Quickly summarizes articles, extracts key information, and saves useful insights for later reference.
-- **Chat with any website**: Ask questions, generate summaries, fill out forms, etc.
+- **ソーシャルメディア執事**: ソーシャルメディアアカウントを確認し、通知とメッセージを要約し、返信を支援。
+- **ニュースキュレーター**: 好みのニュースソースやブログから最新のヘッドラインを集め、要約してパーソナライズされた簡単なブリーフィングを提供。
+- **パーソナルアシスタント**: メールやメッセージの読み書き、フライト予約、製品検索などの日常タスクを支援。
+- **リサーチアシスタント**: 企業、求人、市場トレンド、学術出版物などのトピックを深く掘り下げ、情報を収集・整理。
+- **知識ブックマーク＆要約**: 記事を素早く要約し、重要な情報を抽出し、後で参照できるように有用な洞察を保存。
+- **ウェブサイトとのチャット**: 質問したり、要約を生成したり、フォームに入力したりなど。
 
-## 🛫 Roadmap
+## 🛫 ロードマップ
 
-Please refer to [ROADMAP.md](ROADMAP.md) for an up to date list of features we're aiming to add to BrowserBee. 
+BrowserBeeに追加予定の機能の最新リストについては[ROADMAP.md](ROADMAP.md)を参照してください。
 
-- Support for saving and replaying sessions (macros)
-- Ability to memorize key information as needed (in your local Chrome instance using [IndexedDB](https://developer.chrome.com/docs/devtools/storage/indexeddb))
-- Scheduled task execution (e.g. check news and social media every morning)
+- セッションの保存と再生のサポート（マクロ）
+- 必要に応じて重要な情報を記憶する機能（ローカルのChromeインスタンスで[IndexedDB](https://developer.chrome.com/docs/devtools/storage/indexeddb)を使用）
+- スケジュールされたタスク実行（例: 毎朝ニュースとソーシャルメディアを確認）
 
-If you're interested in contributing to build any of these features or to improve BrowserBee in any way, please head over to [CONTRIBUTING.md](CONTRIBUTING.md). For information about our testing infrastructure and CI/CD pipeline, see [.github/WORKFLOWS.md](.github/WORKFLOWS.md).
+これらの機能を構築したり、BrowserBeeを改善したりすることに興味がある場合は、[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。テストインフラとCI/CDパイプラインについては[.github/WORKFLOWS.md](.github/WORKFLOWS.md)を参照してください。
 
-## ▶️ Installation
+## ▶️ インストール
 
-You have three options to install BrowserBee:
+BrowserBeeをインストールするには3つのオプションがあります：
 
-### Option 1: Download the latest release (Recommended)
+### オプション1: 最新リリースをダウンロード（推奨）
 
-1. Download the latest release from [GitHub Releases](https://github.com/parsaghaffari/browserbee/releases/tag/v0.2.0-beta)
-2. Unzip the downloaded file
-3. Load the extension in Chrome:
-   - Go to `chrome://extensions/`
-   - Enable "Developer mode" (toggle in the top-right corner)
-   - Click "Load unpacked" and select the unzipped directory
-   - Set your LLM API key(s) for Anthropic, OpenAI, Gemini, and/or configure Ollama in the options page that pops up
+1. [GitHub Releases](https://github.com/parsaghaffari/browserbee/releases/tag/v0.2.0-beta)から最新リリースをダウンロード
+2. ダウンロードしたファイルを解凍
+3. Chromeで拡張機能を読み込む：
+   - `chrome://extensions/` にアクセス
+   - 「デベロッパーモード」を有効化（右上のトグル）
+   - 「パッケージ化されていない拡張機能を読み込む」をクリックし、解凍したディレクトリを選択
+   - 表示されるオプション画面でAnthropic、OpenAI、GeminiのLLM APIキー設定、またはOllamaの設定を行う
 
-### Option 2: Build from source
+### オプション2: ソースからビルド
 
-1. Clone this repository
-2. Install dependencies with `npm install` or `pnpm install` (this takes ~3 minutes)
-3. Build the extension with `npm run build` or `pnpm build`
-4. Load the extension in Chrome:
-   - Go to `chrome://extensions/`
-   - Enable "Developer mode"
-   - Click "Load unpacked" and select the `dist` directory
-   - Set your LLM API key(s) for Anthropic, OpenAI, Gemini, and/or configure Ollama in the options page that pops up
+1. このリポジトリをクローン
+2. `npm install` または `pnpm install` で依存関係をインストール（約3分かかります）
+3. `npm run build` または `pnpm build` で拡張機能をビルド
+4. Chromeで拡張機能を読み込む：
+   - `chrome://extensions/` にアクセス
+   - 「デベロッパーモード」を有効化
+   - 「パッケージ化されていない拡張機能を読み込む」をクリックし、`dist` ディレクトリを選択
+   - 表示されるオプション画面でAnthropic、OpenAI、GeminiのLLM APIキー設定、またはOllamaの設定を行う
 
-### Option 3: Chrome Web Store
+### オプション3: Chrome Web Store
 
-BrowserBee is now available on [Chrome Web Store](https://chromewebstore.google.com/detail/browserbee-%F0%9F%90%9D/ilkklnfjpfoibgokaobmjhmdamogjcfj) 🎉
+BrowserBeeは[Chrome Web Store](https://chromewebstore.google.com/detail/browserbee-%F0%9F%90%9D/ilkklnfjpfoibgokaobmjhmdamogjcfj)で利用可能です 🎉
 
-## 🏃‍♂️ Usage
+## 🏃‍♂️ 使用方法
 
-1. Click the BrowserBee icon in your Chrome toolbar, or press *Alt+Shift+B*, to open the side panel  
-2. Type your instruction (e.g., *"Go to Google, search for Cicero, and click the first result"*)  
-3. Hit Enter and watch BrowserBee go to work 🐝
+1. ChromeツールバーでBrowserBeeアイコンをクリックするか、*Alt+Shift+B* を押してサイドパネルを開く
+2. 指示を入力（例: *"Googleにアクセスし、Ciceroを検索して最初の結果をクリック"*）
+3. Enterキーを押すと、BrowserBeeが動作を開始 🐝
 
-**Note:** 
-1. Since BrowserBee uses Chrome DevTools Protocol (CDP) to attach to tabs, it's best to leave it attached to a base tab that you leave open throughout your session (BrowserBee can open new tabs if needed). If you close the attached tab, use the ![reattach button](<reattach-button.png>) button to reattach to a new tab.
-2. You can have one instance of BrowserBee running per Chrome window and the instances will be working in isolation from one another.
-3. BrowserBee can't attach to tabs without a URL (e.g. a new tab), or with URLs starting with 'chrome://' or 'chrome-extension://'.
+**Note:**
 
-## 🫂 Community
+1. BrowserBeeはChrome DevTools Protocol (CDP)を使ってタブに接続するため、セッション全体で開いたままにするベースタブに接続するのが最適（BrowserBeeは必要に応じて新しいタブを開けます）。接続されたタブを閉じた場合は、![reattach button](<reattach-button.png>) ボタンを使って新しいタブに再接続してください。
+2. Chromeウィンドウごとに1つのBrowserBeeインスタンスを実行でき、インスタンスは互いに独立して動作します。
+3. BrowserBeeはURLのないタブ（例: 新しいタブ）や'chrome://'または'chrome-extension://'で始まるURLのタブには接続できません。
 
-Join our Discord community to connect with BrowserBee users and developers:
+## 🫂 コミュニティ
+
+BrowserBeeユーザーと開発者に接続するためにDiscordコミュニティに参加してください：
 
 [![Join our Discord](https://img.shields.io/badge/Discord-Join%20Chat-7289da?logo=discord&logoColor=white&style=for-the-badge)](https://discord.gg/RUaq9bfESj)
 
-## 🫂 Acknowledgements
+## 🫂 謝辞
 
-BrowserBee is built using these amazing open source projects:
+BrowserBeeは以下の素晴らしいオープンソースプロジェクトを使用して構築されています：
 
-- [Cline](https://github.com/cline/cline) enabled us to vibe-code the first version of BrowserBee and inspired me to build a "Cline for the web"
-- [playwright-crx](https://github.com/ruifigueira/playwright-crx) by [@ruifigueira](https://github.com/ruifigueira) for in-browser use of Playwright
-- [playwright-mcp](https://github.com/microsoft/playwright-mcp) for the browser tool implementations
-- [daisyUI](https://daisyui.com/) 🌼 for the ~~pollen and nectar~~ UI components :)
+- [Cline](https://github.com/cline/cline) - BrowserBeeの最初のバージョンをvibe-codeで作成し、「ウェブ版Cline」を構築するインスピレーションを与えてくれました
+- [@ruifigueira](https://github.com/ruifigueira)による[playwright-crx](https://github.com/ruifigueira/playwright-crx) - ブラウザ内でのPlaywright使用
+- [playwright-mcp](https://github.com/microsoft/playwright-mcp) - ブラウザツールの実装
+- [daisyUI](https://daisyui.com/) 🌼 - ~~花粉と蜜~~ UIコンポーネント :)
 
-## 💡 Learnings & what's worth stealing
+## 💡 学びと盗む価値のあるもの
 
-1. **Running Playwright in the browser.** Playwright provides a robust and standard interface to LLMs for interacting with modern websites and web apps. Most "browser use" approaches I've come across like [Browser Use](https://github.com/browser-use) and [Playwright MCP](https://github.com/microsoft/playwright-mcp) are primarily designed for controlling a browser remotely in a backend service-browser fashion which is powerful for enterprise automations, whereas [@ruifigueira](https://github.com/ruifigueira) has shown we can neatly wrap Playwright with a browser extension and reduce complexity for end-user use cases.
-2. **"Reflect and learn" memory pattern.** Certain setups are rich in feedback for AI agents. This is one of them, where the agent not only has a broad range of tools available to interact with the environment, but also has powerful observation abilities to understand the impact of its actions on the environment. For example, if the agent is tasked with completing a product purchase, where there is a good chance it's able to brute force its way to the end goal by using different tools (such as mouse and keyboard interactions), it can usually tell whether it has succeeded in the task or not by regularly taking screenshots. There is a valuable learning signal here for the agent and by invoking the agent to encode and memorise these learnings we can enhance future performance and increase efficiency on similar tasks, especially for smaller less capable models. In my limited testing, we can sometimes reduce the number of tokens needed (and therefore cost) for a task by 5x or more if we memorize the optimal tool sequence.
-3. **Interacting with web pages remains a hard task for LLM-powered agents.** DOMs and screenshots are complex, low-information-density modalities that are slow, expensive, and challenging to process for LLMs. Compare a web page to a piece code for instance: each token in a piece of code carries a lot more information on average than a token in an HTML page or pixels in a screenshot. Therefore we need a combination of cleverly simplified representations as well as cheaper/faster models for this type of product to become fully feasible.
-4. **Why use an LLM at all?**. The core value that an LLM agent can provide in this context is in _discovering_ a path or a sequence of actions to accomplish a task which can then be encoded as a set of tool calls, or in fact plain JavaScript (see [Playwright Codegen](https://playwright.dev/docs/codegen)); once a sequence is already known, it's trivial to follow - no LLM needed.
-5. **Privacy-first personal AI tools are the way to go.** There is no doubt that most of us will have some form of an always-on AI servant in the future, and I think the only way we can get there safely is through open source software that interacts transparently with our data and with LLMs. There is a lot of scope for building this type of software, and business models to support it (e.g. offering a hosted version), so I really hope to see and use more robust open source AI assistants.
+1. **ブラウザでのPlaywright実行。** Playwrightは、LLMが現代のウェブサイトやウェブアプリと対話するための堅牢で標準的なインターフェースを提供します。[Browser Use](https://github.com/browser-use)や[Playwright MCP](https://github.com/microsoft/playwright-mcp)などのほとんどの「ブラウザ使用」アプローチは、主にバックエンドサービス-ブラウザ方式でブラウザをリモート制御するように設計されており、エンタープライズ自動化には強力ですが、[@ruifigueira](https://github.com/ruifigueira)が示したように、ブラウザ拡張機能でPlaywrightをうまくラップすることで、エンドユーザー向けユースケースの複雑さを軽減できます。
+2. **「反省と学習」メモリパターン。** 特定のセットアップはAIエージェントにとってフィードバックが豊富です。このセットアップはその一つで、エージェントは環境と対話するための幅広いツールだけでなく、環境へのアクションの影響を理解するための強力な観測能力も持っています。例えば、エージェントが製品購入を完了するタスクを割り当てられ、マウスやキーボードのインタラクションなどの異なるツールを使ってゴールに到達する可能性が高い場合、定期的にスクリーンショットを撮影することでタスクの成功を判断できます。ここにはエージェントにとって価値ある学習シグナルがあり、これらの学習をエンコードして記憶することで将来のパフォーマンスを向上させ、特に小さな非力なモデルで同様のタスクの効率を高めることができます。私の限定的なテストでは、最適なツールシーケンスを記憶することで、タスクに必要なトークン数（したがってコスト）を5倍以上削減できる場合があります。
+3. **LLM駆動エージェントにとって、ウェブページとの対話は依然として難しいタスク。** DOMやスクリーンショットは複雑で情報密度の低いモダリティで、LLMにとって処理が遅く高価で困難です。ウェブページをコードと比較してみてください：コードの各トークンは平均的にHTMLページやスクリーンショットのピクセルよりもはるかに多くの情報を運びます。そのため、このタイプの製品を完全に実現可能にするには、巧みに簡略化された表現と、より安価/高速なモデルの組み合わせが必要です。
+4. **なぜLLMを使うのか？** この文脈でLLMエージェントが提供できるコアバリューは、タスクを達成するためのパスやアクションシーケンスを_発見_することにあり、それをツール呼び出しのセット、または実際にはプレーンなJavaScript（[Playwright Codegen](https://playwright.dev/docs/codegen)を参照）としてエンコードできます。一度シーケンスが既知になれば、それに従うのは簡単です - LLMは必要ありません。
+5. **プライバシー重視のパーソナルAIツールが正しい道。** 私たちの多くが将来何らかの常時稼働AIサーヴァントを持つことは疑いの余地がなく、安全にそこに到達する唯一の方法は、私たちのデータやLLMと透明に連携するオープンソースソフトウェアを通じてだと思います。このタイプのソフトウェアを構築する余地は大きく、それをサポートするビジネスモデルもあります（例: ホスト版の提供）、そのため、より堅牢なオープンソースAIアシスタントをたくさん見て使いたいと思います。
 
-## 📜 License
+## 📜 ライセンス
 
 [Apache 2.0](LICENSE)
