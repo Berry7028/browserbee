@@ -97,7 +97,7 @@ export const TabStatusBar: React.FC<TabStatusBarProps> = ({
   
   const containerClasses =
     variant === 'inline'
-      ? 'flex w-full items-center justify-between gap-3 rounded-3xl border border-white/12 bg-[#111823] px-5 py-3 text-sm text-white/80 shadow-[0_25px_80px_-60px_rgba(0,0,0,1)]'
+      ? 'flex w-full items-center justify-between gap-3 rounded-3xl border border-white/12 bg-[#1a1a1a] px-5 py-3 text-sm text-white/80 shadow-[0_25px_80px_-60px_rgba(0,0,0,1)]'
       : 'flex max-w-[240px] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-2 text-xs text-white/70 backdrop-blur';
 
   const titleClasses =
@@ -120,16 +120,16 @@ export const TabStatusBar: React.FC<TabStatusBarProps> = ({
       <span
         className={`${dotClasses} ${
           tabStatus === 'attached'
-            ? 'bg-emerald-400 animate-pulse'
+            ? 'bg-white animate-pulse'
             : tabStatus === 'detached'
-            ? 'bg-rose-500'
+            ? 'bg-white/30'
             : tabStatus === 'running'
-            ? 'bg-sky-400 animate-pulse'
+            ? 'bg-white animate-pulse'
             : tabStatus === 'idle'
-            ? 'bg-emerald-300'
+            ? 'bg-white/60'
             : tabStatus === 'error'
-            ? 'bg-rose-500 animate-pulse'
-            : 'bg-amber-400'
+            ? 'bg-white/40 animate-pulse'
+            : 'bg-white/20'
         }`}
         title={
           tabStatus === 'attached'

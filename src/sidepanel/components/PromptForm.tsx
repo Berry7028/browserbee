@@ -28,7 +28,7 @@ export const PromptForm: React.FC<PromptFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="mt-4">
-      <div className="relative overflow-hidden rounded-3xl border border-white/12 bg-[#101a27] px-5 py-5 transition focus-within:border-white/40">
+      <div className="relative overflow-hidden rounded-3xl border border-white/12 bg-[#1f1f1f] px-5 py-5 transition focus-within:border-white/40">
         <div className="mb-4 w-full">
           <TokenUsageDisplay />
         </div>
@@ -56,7 +56,7 @@ export const PromptForm: React.FC<PromptFormProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="absolute bottom-3.5 right-3.5 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/80 text-white shadow-lg shadow-red-500/40 transition hover:bg-red-500 disabled:opacity-40"
+            className="absolute bottom-3.5 right-3.5 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-40"
             title="キャンセル"
           >
             <FontAwesomeIcon icon={faXmark} />
@@ -64,7 +64,7 @@ export const PromptForm: React.FC<PromptFormProps> = ({
         ) : (
           <button
             type="submit"
-            className="absolute bottom-3.5 right-3.5 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-fuchsia-500 text-white shadow-lg shadow-indigo-500/40 transition hover:shadow-indigo-500/60 disabled:opacity-40"
+            className="absolute bottom-3.5 right-3.5 flex h-12 w-12 items-center justify-center rounded-full bg-white text-black transition hover:bg-white/80 disabled:opacity-40"
             disabled={!prompt.trim() || tabStatus === 'detached'}
             title={tabStatus === 'detached' ? 'タブを再読み込みしてください' : '送信'}
           >

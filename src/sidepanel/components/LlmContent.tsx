@@ -75,7 +75,7 @@ export const LlmContent: React.FC<LlmContentProps> = ({ content }) => {
                 ul: ({node, ...props}) => <ul className="mb-3 list-disc space-y-1 pl-6 text-white/80" {...props} />,
                 ol: ({node, ...props}) => <ol className="mb-3 list-decimal space-y-1 pl-6 text-white/80" {...props} />,
                 li: ({node, ...props}) => <li className="text-[15px]" {...props} />,
-                a: ({node, ...props}) => <a className="text-sky-400 underline hover:text-sky-300" {...props} />,
+                a: ({node, ...props}) => <a className="text-white underline decoration-white/30 transition hover:decoration-white/60" {...props} />,
                 code: ({node, className, children, ...props}) => {
                   const match = /language-(\w+)/.exec(className || '');
                   const isInline = !match && !className;

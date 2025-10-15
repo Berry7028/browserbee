@@ -140,7 +140,7 @@ export function ProviderSelector({ isProcessing, variant = 'default' }: Provider
 
   const baseClasses =
     variant === 'compact'
-      ? 'flex w-full items-center justify-between rounded-3xl border border-white/12 bg-[#111823] px-4 py-3 text-sm text-white/80 shadow-[0_25px_80px_-60px_rgba(0,0,0,1)]'
+      ? 'flex w-full items-center justify-between rounded-3xl border border-white/12 bg-[#1a1a1a] px-4 py-3 text-sm text-white/80 shadow-[0_25px_80px_-60px_rgba(0,0,0,1)]'
       : 'flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70';
 
   const buttonClasses =
@@ -176,7 +176,7 @@ export function ProviderSelector({ isProcessing, variant = 'default' }: Provider
                 <option
                   key={`${option.provider}|${model.id}`}
                   value={`${option.provider}|${model.id}`}
-                  className="bg-[#0f1621] text-white"
+                  className="bg-[#1f1f1f] text-white"
                 >
                   {option.displayName} ・ {model.name}
                 </option>

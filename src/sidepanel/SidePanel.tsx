@@ -287,11 +287,11 @@ export function SidePanel() {
     messages.length === 0 && Object.keys(streamingSegments).length === 0;
 
   return (
-    <div className="min-h-screen bg-[#0a1119] text-slate-100">
+    <div className="min-h-screen bg-[#141414] text-white">
       <div className="mx-auto flex h-screen max-w-4xl flex-col gap-6 px-6 py-8">
         <header className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-3xl border border-white/12 bg-[#111823] text-lg text-white">
+            <div className="flex h-11 w-11 items-center justify-center rounded-3xl border border-white/12 bg-[#151515] text-lg text-white">
               <FontAwesomeIcon icon={faComments} />
             </div>
             <div className="flex min-w-[220px] flex-1 max-w-sm">
@@ -310,7 +310,7 @@ export function SidePanel() {
 
         {hasConfiguredProviders ? (
           <>
-            <div className="flex flex-1 flex-col gap-4 overflow-hidden rounded-3xl border border-white/10 bg-[#0f1621] shadow-[0_30px_120px_-60px_rgba(0,0,0,0.95)] backdrop-blur">
+            <div className="flex flex-1 flex-col gap-4 overflow-hidden rounded-3xl border border-white/12 bg-[#141414] shadow-[0_30px_120px_-60px_rgba(0,0,0,0.95)] backdrop-blur">
               <OutputHeader
                 onClearHistory={handleClearHistory}
                 onReflectAndLearn={handleReflectAndLearn}
@@ -374,7 +374,7 @@ export function SidePanel() {
             </p>
             <button
               onClick={navigateToOptions}
-              className="mt-6 flex items-center gap-2 rounded-full bg-white text-sm font-medium text-[#0e1116] transition hover:scale-105 hover:bg-slate-100 px-5 py-2.5"
+              className="mt-6 flex items-center gap-2 rounded-full bg-white text-sm font-medium text-black transition hover:scale-105 hover:bg-white/80 px-5 py-2.5"
             >
               設定画面を開く
             </button>

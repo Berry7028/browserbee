@@ -34,7 +34,7 @@ export const OutputHeader: React.FC<OutputHeaderProps> = ({
         </button>
         <button
           onClick={onClearHistory}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white/80 transition hover:bg-red-500/20 hover:text-red-100 disabled:opacity-40"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white disabled:opacity-40"
           disabled={isProcessing}
           title="履歴をクリア"
         >

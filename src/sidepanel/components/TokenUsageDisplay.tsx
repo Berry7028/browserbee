@@ -97,7 +97,7 @@ export function TokenUsageDisplay() {
   // };
 
   return (
-    <div className="flex w-full items-center justify-between rounded-3xl border border-white/12 bg-[#0f1621] px-4 py-3 text-xs text-white/75">
+    <div className="flex w-full items-center justify-between rounded-3xl border border-white/12 bg-[#1a1a1a] px-4 py-3 text-xs text-white/75">
       <div className="flex items-center gap-2 text-white/70">
         <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white">
           <FontAwesomeIcon icon={faGaugeHigh} size="sm" />
@@ -108,11 +108,11 @@ export function TokenUsageDisplay() {
       </div>
       <div className="flex items-center gap-4 text-[13px] font-medium text-white/70">
         <span className="flex items-center gap-1">
-          <FontAwesomeIcon icon={faArrowUp} className="text-emerald-300/80" />
+          <FontAwesomeIcon icon={faArrowUp} className="text-white/70" />
           {formatTokenCount(usage.inputTokens)}
         </span>
         <span className="flex items-center gap-1">
-          <FontAwesomeIcon icon={faArrowDown} className="text-sky-300/80" />
+          <FontAwesomeIcon icon={faArrowDown} className="text-white/70" />
           {formatTokenCount(usage.outputTokens)}
         </span>
         <span className="rounded-full bg-white/[0.08] px-3 py-1 text-xs text-white/80">
