@@ -139,6 +139,17 @@ export const openaiModels = {
     cacheReadsPrice: 0.005,
     isReasoningModel: true,
   },
+  "gpt-4.1-nano-2025-04-14": {
+    name: "GPT-4.1 Nano",
+    inputPrice: 0.04,
+    outputPrice: 0.32,
+    maxTokens: 32768,
+    contextWindow: 1048576,
+    supportsImages: true,
+    supportsPromptCache: true,
+    cacheReadsPrice: 0.004,
+    isReasoningModel: false,
+  },
   // Existing OpenAI Models
   "gpt-4o": {
     name: "GPT-4o",
