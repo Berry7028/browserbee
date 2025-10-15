@@ -1,260 +1,261 @@
-# BrowserBee Architecture
+# BrowserBee アーキテクチャ
 
-This document provides a detailed overview of BrowserBee's architecture, component structure, and code organization.
+このドキュメントは、BrowserBee のアーキテクチャ、コンポーネント構成、コードの整理について詳しく説明します。
 
-## Overview
+## 概要
 
-BrowserBee uses a modular agent architecture with four key modules:
+BrowserBee は、4つの主要モジュールからなるモジュラー型エージェントアーキテクチャを採用しています。
 
-- **Agent Module** – Processes user instructions and maps them to browser actions
-- **Background Module** – Manages tab control, messaging, and task streaming
-- **UI Module** – Provides a clean sidebar interface for interaction and configuration
-- **Models Module** – Provides a flexible interface for multiple LLM providers
+- **エージェントモジュール** – ユーザー指示を処理し、ブラウザ操作にマッピング
+- **バックグラウンドモジュール** – タブ制御、メッセージング、タスクストリーミング管理
+- **UIモジュール** – インタラクションと設定用のサイドバーインターフェースを提供
+- **モデルモジュール** – 複数のLLMプロバイダーに対応する柔軟なインターフェース
 
-## Detailed Architecture
+## 詳細アーキテクチャ
 
-### Models Module
+### モデルモジュール
 
-The Models Module provides a flexible interface for multiple LLM providers:
+モデルモジュールは、複数のLLMプロバイダーに対応する柔軟なインターフェースを提供します。
 
-- **models/providers/types.ts**: Common interfaces for all providers
-  - `ModelInfo`: Information about a model (name, pricing, etc.)
-  - `ProviderOptions`: Configuration options for a provider
-  - `StreamChunk`: Common format for streaming responses
-  - `LLMProvider`: Interface that all providers must implement
+- **models/providers/types.ts**: 全プロバイダー共通のインターフェース
+  - `ModelInfo`: モデル情報（名前、価格など）
+  - `ProviderOptions`: プロバイダー設定オプション
+  - `StreamChunk`: ストリーミングレスポンスの共通フォーマット
+  - `LLMProvider`: 全プロバイダーが実装すべきインターフェース
 
-- **models/providers/factory.ts**: Factory function to create providers
-  - Creates the appropriate provider based on configuration
+- **models/providers/factory.ts**: プロバイダー生成用ファクトリー関数
+  - 設定に応じて適切なプロバイダーを生成
 
-- **models/providers/anthropic.ts**: Anthropic Claude provider implementation
-  - Handles Claude-specific streaming and features
-  - Supports Claude's thinking feature
+- **models/providers/anthropic.ts**: Anthropic Claude プロバイダー実装
+  - Claude固有のストリーミングや機能を処理
+  - Claudeのthinking機能対応
 
-- **models/providers/openai.ts**: OpenAI GPT provider implementation
-  - Handles OpenAI-specific streaming and features
+- **models/providers/openai.ts**: OpenAI GPT プロバイダー実装
+  - OpenAI固有のストリーミングや機能を処理
 
-- **models/providers/gemini.ts**: Google Gemini provider implementation
-  - Handles Gemini-specific streaming and features
+- **models/providers/gemini.ts**: Google Gemini プロバイダー実装
+  - Gemini固有のストリーミングや機能を処理
 
-- **models/providers/ollama.ts**: Ollama provider implementation
-  - Connects to locally running Ollama models
-  - Uses browser-compatible version of the Ollama library
-  - Supports streaming responses from local models
+- **models/providers/ollama.ts**: Ollama プロバイダー実装
+  - ローカルで稼働するOllamaモデルに接続
+  - ブラウザ対応版Ollamaライブラリ使用
+  - ローカルモデルからのストリーミングレスポンス対応
 
-- **models/providers/ollama-format.ts**: Ollama message format transformer
-  - Converts between Anthropic and Ollama message formats
-  - Handles complex message structures with tools and images
+- **models/providers/ollama-format.ts**: Ollamaメッセージフォーマット変換
+  - AnthropicとOllama間のメッセージフォーマット変換
+  - ツールや画像を含む複雑なメッセージ構造対応
 
-### Agent Module
+### エージェントモジュール
 
-The Agent Module is responsible for processing user instructions and executing browser automation tasks. It consists of a few sub-modules:
+エージェントモジュールは、ユーザー指示の処理とブラウザ自動化タスクの実行を担当します。サブモジュール構成：
 
-- **agent/AgentCore.ts**: Main agent class that coordinates all components
-  - Uses the provider factory to create the appropriate LLM provider
-  - Configurable with different LLM providers
-- **agent/TokenManager.ts**: Token estimation and message history trimming
-- **agent/ToolManager.ts**: Tool wrapping with health checks
-- **agent/PromptManager.ts**: System prompt generation
-- **agent/MemoryManager.ts**: Memory lookup and integration
-- **agent/ErrorHandler.ts**: Cancellation and error handling
-- **agent/ExecutionEngine.ts**: Streaming and non-streaming execution
-  - Provider-agnostic implementation that works with any LLM provider
-- **agent/approvalManager.ts**: Handles user approval for sensitive actions
+- **agent/AgentCore.ts**: 全コンポーネントを統括するメインエージェントクラス
+  - プロバイダーファクトリーで適切なLLMプロバイダー生成
+  - 複数LLMプロバイダーに対応可能
+- **agent/TokenManager.ts**: トークン推定とメッセージ履歴のトリミング
+- **agent/ToolManager.ts**: ツールラッピングとヘルスチェック
+- **agent/PromptManager.ts**: システムプロンプト生成
+- **agent/MemoryManager.ts**: メモリ検索と統合
+- **agent/ErrorHandler.ts**: キャンセルとエラー処理
+- **agent/ExecutionEngine.ts**: ストリーミング/非ストリーミング実行
+  - どのLLMプロバイダーでも動作するプロバイダー非依存実装
+- **agent/approvalManager.ts**: 機密操作のユーザー承認管理
 
-- **agent/tools/**: Browser automation tools organized by functionality
-  - **navigationTools.ts**: Browser navigation functions (go to URL, back, forward, refresh)
-  - **interactionTools.ts**: User interaction functions (click, type, scroll)
-  - **observationTools.ts**: Page observation functions (screenshot, DOM access, content extraction)
-  - **mouseTools.ts**: Mouse movement and interaction (move, hover, drag)
-  - **keyboardTools.ts**: Keyboard input functions (press keys, keyboard shortcuts)
-  - **tabTools.ts**: Tab management functions (create, switch, close tabs)
-  - **memoryTools.ts**: Memory storage and retrieval functions
-  - **types.ts**: Type definitions for tools
-  - **utils.ts**: Utility functions for tools
-  - **index.ts**: Tool exports and registration
+- **agent/tools/**: 機能別に整理されたブラウザ自動化ツール
+  - **navigationTools.ts**: ブラウザナビゲーション（URL移動、戻る、進む、リフレッシュ）
+  - **interactionTools.ts**: ユーザー操作（クリック、入力、スクロール）
+  - **observationTools.ts**: ページ観察（スクリーンショット、DOMアクセス、内容抽出）
+  - **mouseTools.ts**: マウス操作（移動、ホバー、ドラッグ）
+  - **keyboardTools.ts**: キーボード入力（キー押下、ショートカット）
+  - **tabTools.ts**: タブ管理（作成、切替、閉じる）
+  - **memoryTools.ts**: メモリ保存・取得
+  - **types.ts**: ツール用型定義
+  - **utils.ts**: ツール用ユーティリティ
+  - **index.ts**: ツールのエクスポートと登録
 
-### Background Module
+### バックグラウンドモジュール
 
-The Background Module manages the extension's background processes, including tab control and communication.
+バックグラウンドモジュールは、拡張機能のバックグラウンド処理（タブ制御・通信等）を管理します。
 
-- **background/index.ts**: Entry point for the background script
-- **background/tabManager.ts**: Tab attachment and management
-  - Handles connecting to tabs
-  - Manages tab state and lifecycle
-  - Coordinates tab interactions
-- **background/agentController.ts**: Agent initialization and execution
-  - Creates and configures the agent
-  - Processes user instructions
-  - Manages agent execution flow
-- **background/streamingManager.ts**: Streaming functionality
-  - Handles streaming of agent responses
-  - Manages segmentation of responses
-  - Controls streaming state
-- **background/messageHandler.ts**: Message routing and handling
-  - Processes messages between components
-  - Routes messages to appropriate handlers
-  - Manages message queue
-- **background/configManager.ts**: Provider configuration management
-  - Stores and retrieves provider configuration
-  - Validates provider configuration requirements
-  - Provides a singleton instance for global access
-- **background/types.ts**: Type definitions for background processes
-- **background/utils.ts**: Utility functions for background processes
+- **background/index.ts**: バックグラウンドスクリプトのエントリポイント
+- **background/tabManager.ts**: タブ接続・管理
+  - タブへの接続
+  - タブ状態・ライフサイクル管理
+  - タブ操作の調整
+- **background/agentController.ts**: エージェント初期化・実行
+  - エージェント生成・設定
+  - ユーザー指示の処理
+  - エージェント実行フロー管理
+- **background/streamingManager.ts**: ストリーミング機能
+  - エージェントレスポンスのストリーミング処理
+  - レスポンスの分割管理
+  - ストリーミング状態制御
+- **background/messageHandler.ts**: メッセージルーティング・処理
+  - コンポーネント間メッセージ処理
+  - 適切なハンドラーへのルーティング
+  - メッセージキュー管理
+- **background/configManager.ts**: プロバイダー設定管理
+  - 設定保存・取得
+  - 設定要件の検証
+  - グローバルアクセス用シングルトン提供
+- **background/types.ts**: バックグラウンド処理用型定義
+- **background/utils.ts**: バックグラウンド処理用ユーティリティ
 
-### UI Module
+### UIモジュール
 
-The UI Module provides the user interface for interacting with the extension.
+UIモジュールは、拡張機能のユーザーインターフェースを提供します。
 
-#### Side Panel
+#### サイドパネル
 
-The Side Panel is the main interface for interacting with BrowserBee. It has been refactored into a modular component structure:
+サイドパネルは、BrowserBeeとの主なインターフェースです。モジュラー型コンポーネント構成にリファクタ済み：
 
-- **sidepanel/SidePanel.tsx**: Main component that orchestrates the UI
-  - Composes all UI components
-  - Coordinates state and functionality through hooks
-  - Manages overall layout and structure
+- **sidepanel/SidePanel.tsx**: UI全体を統括するメインコンポーネント
+  - 全UIコンポーネントの構成
+  - フックによる状態・機能の調整
+  - レイアウト・構造管理
 
-- **sidepanel/types.ts**: Type definitions for the side panel
-  - Message types and interfaces
-  - Chrome message interfaces
-  - Other shared types
+- **sidepanel/types.ts**: サイドパネル用型定義
+  - メッセージ型・インターフェース
+  - Chromeメッセージインターフェース
+  - その他共通型
 
-- **sidepanel/components/**: Modular UI components
-  - **LlmContent.tsx**: Renders LLM content with tool calls
-    - Processes and displays markdown content
-    - Handles special formatting for tool calls
-    - Applies styling to different content elements
-  - **ScreenshotMessage.tsx**: Renders screenshot images
-    - Displays base64-encoded screenshots
-    - Handles image formatting and sizing
-  - **MessageDisplay.tsx**: Handles rendering of different message types
-    - Manages message filtering
-    - Coordinates rendering of system, LLM, and screenshot messages
-    - Handles streaming segments
-  - **OutputHeader.tsx**: Manages the output section header with toggle controls
-    - Provides controls for clearing history
-    - Manages system message visibility toggle
-  - **PromptForm.tsx**: Handles the input form and submission
-    - Manages prompt input
-    - Handles form submission
-    - Provides cancel functionality during processing
-  - **TabStatusBar.tsx**: Displays the current tab information
-    - Shows active tab ID and title
-    - Indicates connection status
-  - **TokenUsageDisplay.tsx**: Displays token usage and provider information
-    - Shows current LLM provider and model
-    - Tracks input and output tokens
-    - Displays estimated cost
+- **sidepanel/components/**: モジュラー型UIコンポーネント
+  - **LlmContent.tsx**: ツール呼び出し付きLLMコンテンツ表示
+    - Markdownコンテンツの処理・表示
+    - ツール呼び出し用特別フォーマット対応
+    - 要素ごとのスタイリング
+  - **ScreenshotMessage.tsx**: スクリーンショット画像表示
+    - base64スクリーンショット表示
+    - 画像フォーマット・サイズ調整
+  - **MessageDisplay.tsx**: 各種メッセージ表示
+    - メッセージフィルタリング
+    - システム/LLM/スクリーンショットメッセージ表示調整
+    - ストリーミングセグメント対応
+  - **OutputHeader.tsx**: 出力セクションヘッダー・トグル制御
+    - 履歴クリア機能
+    - システムメッセージ表示トグル
+  - **PromptForm.tsx**: 入力フォーム・送信処理
+    - プロンプト入力管理
+    - フォーム送信処理
+    - 処理中のキャンセル機能
+  - **TabStatusBar.tsx**: 現在のタブ情報表示
+    - アクティブタブID・タイトル表示
+    - 接続状態表示
+  - **TokenUsageDisplay.tsx**: トークン使用量・プロバイダー情報表示
+    - 現在のLLMプロバイダー・モデル表示
+    - 入出力トークン追跡
+    - 推定コスト表示
 
-- **sidepanel/hooks/**: Custom React hooks for state and functionality
-  - **useTabManagement.ts**: Manages tab-related functionality
-    - Handles tab connection
-    - Tracks tab state
-    - Updates tab information
-  - **useMessageManagement.ts**: Handles message state and processing
-    - Manages message history
-    - Controls streaming state
-    - Provides message manipulation functions
-  - **useChromeMessaging.ts**: Manages communication with the Chrome extension API
-    - Listens for Chrome messages
-    - Sends messages to background script
-    - Handles message processing
+- **sidepanel/hooks/**: 状態・機能用カスタムReactフック
+  - **useTabManagement.ts**: タブ関連機能管理
+    - タブ接続処理
+    - タブ状態追跡
+    - タブ情報更新
+  - **useMessageManagement.ts**: メッセージ状態・処理管理
+    - メッセージ履歴管理
+    - ストリーミング状態制御
+    - メッセージ操作機能
+  - **useChromeMessaging.ts**: Chrome拡張API通信管理
+    - Chromeメッセージ受信
+    - バックグラウンドスクリプトへの送信
+    - メッセージ処理
 
-#### Options Page
+#### オプションページ
 
-- **options/Options.tsx**: Main component that orchestrates the options UI
-  - Manages state and configuration
-  - Composes all options components
-- **options/index.tsx**: Entry point for the options page
-- **options/components/**: Modular UI components for the options page
-  - **AboutSection.tsx**: Displays the "About" information
-  - **ProviderSelector.tsx**: Handles provider selection
-  - **AnthropicSettings.tsx**, **OpenAISettings.tsx**, **GeminiSettings.tsx**, **OllamaSettings.tsx**: Provider-specific settings
-  - **OpenAICompatibleSettings.tsx**: Settings for OpenAI-compatible providers
-  - **ModelList.tsx**: Manages model list for OpenAI-compatible providers
-  - **OllamaModelList.tsx**: Manages custom model list for Ollama provider
-  - **ModelPricingTable.tsx**: Displays model pricing information
-  - **MemoryManagement.tsx**: Handles memory export/import functionality
-  - **SaveButton.tsx**: Manages settings saving functionality
-  - **LLMProviderConfig.tsx**: Combines provider selection and settings
-  - **ProviderSettings.tsx**: Renders the appropriate provider settings component
+- **options/Options.tsx**: オプションUIのメインコンポーネント
+  - 状態・設定管理
+  - 全オプションコンポーネント構成
+- **options/index.tsx**: オプションページのエントリポイント
+- **options/components/**: オプションページ用モジュラー型UIコンポーネント
+  - **AboutSection.tsx**: 「About」情報表示
+  - **ProviderSelector.tsx**: プロバイダー選択処理
+  - **AnthropicSettings.tsx**, **OpenAISettings.tsx**, **GeminiSettings.tsx**, **OllamaSettings.tsx**: プロバイダー別設定
+  - **OpenAICompatibleSettings.tsx**: OpenAI互換プロバイダー用設定
+  - **ModelList.tsx**: OpenAI互換プロバイダー用モデルリスト管理
+  - **OllamaModelList.tsx**: Ollama用カスタムモデルリスト管理
+  - **ModelPricingTable.tsx**: モデル価格情報表示
+  - **MemoryManagement.tsx**: メモリのエクスポート/インポート機能
+  - **SaveButton.tsx**: 設定保存機能
+  - **LLMProviderConfig.tsx**: プロバイダー選択・設定統合
+  - **ProviderSettings.tsx**: 適切なプロバイダー設定コンポーネント表示
 
-### Tracking Module
+### トラッキングモジュール
 
-The Tracking Module handles memory storage, token tracking, and other tracking-related functionality.
+トラッキングモジュールは、メモリ保存、トークン追跡、その他トラッキング関連機能を担当します。
 
-- **tracking/memoryService.ts**: Manages storage and retrieval of agent memories
-  - Handles IndexedDB operations
-  - Provides memory storage and retrieval
-  - Includes self-healing database functionality
-- **tracking/tokenTrackingService.ts**: Tracks token usage for API calls
-- **tracking/screenshotManager.ts**: Manages screenshot storage and retrieval
-- **tracking/domainUtils.ts**: Utilities for working with domains
+- **tracking/memoryService.ts**: エージェントメモリ保存・取得管理
+  - IndexedDB操作
+  - メモリ保存・取得
+  - 自己修復型DB機能
+- **tracking/tokenTrackingService.ts**: APIコール用トークン使用量追跡
+- **tracking/screenshotManager.ts**: スクリーンショット保存・取得管理
+- **tracking/domainUtils.ts**: ドメイン操作用ユーティリティ
 
-## Data Flow
+## データフロー
 
-1. User enters a prompt in the Side Panel
-2. The prompt is sent to the Background Module
-3. The Background Module initializes the Agent with the configured LLM provider
-4. The Agent processes the prompt and executes browser actions:
-   - TokenManager handles token estimation and history trimming
-   - PromptManager generates the system prompt
-   - ExecutionEngine manages the execution flow
-   - ToolManager provides access to browser tools
-   - MemoryManager integrates relevant memories
-   - ErrorHandler manages error conditions
-5. Results are streamed back to the Side Panel
-6. The Side Panel displays the results to the user
+1. ユーザーがサイドパネルでプロンプト入力
+2. プロンプトがバックグラウンドモジュールへ送信
+3. バックグラウンドモジュールが設定済みLLMプロバイダーでエージェント初期化
+4. エージェントがプロンプト処理・ブラウザ操作実行
+   - TokenManagerがトークン推定・履歴トリミング
+   - PromptManagerがシステムプロンプト生成
+   - ExecutionEngineが実行フロー管理
+   - ToolManagerがブラウザツール提供
+   - MemoryManagerが関連メモリ統合
+   - ErrorHandlerがエラー処理
+5. 結果がサイドパネルへストリーミング
+6. サイドパネルが結果をユーザーに表示
 
-## Component Relationships
+## コンポーネント関係
 
-- The Side Panel communicates with the Background Module through Chrome messaging
-- The Background Module manages the Agent and coordinates its actions
-- The Agent Core coordinates the specialized components (TokenManager, ToolManager, etc.)
-- Each specialized component handles a specific aspect of the agent's functionality
-- The Agent uses tools to interact with the browser
-- The Tracking Module provides persistence and monitoring services
-- The Options Page configures the extension settings used by the Background Module
-- The Models Module provides a flexible interface for multiple LLM providers
+- サイドパネルはChromeメッセージングでバックグラウンドモジュールと通信
+- バックグラウンドモジュールがエージェント管理・調整
+- エージェントコアが各専門コンポーネント（TokenManager, ToolManager等）を統括
+- 各専門コンポーネントが特定機能を担当
+- エージェントはツールでブラウザ操作
+- トラッキングモジュールが永続化・監視サービス提供
+- オプションページがバックグラウンドモジュール用設定を管理
+- モデルモジュールが複数LLMプロバイダー用インターフェース提供
 
-## Provider System
+## プロバイダーシステム
 
-## Ollama Integration
+## Ollama統合
 
-The Ollama integration allows users to connect to locally running Ollama models:
+Ollama統合により、ローカル稼働Ollamaモデルへの接続が可能です。
 
-1. **Browser Compatibility**: Uses the browser-compatible version of the Ollama library
-2. **API Key Optional**: Unlike other providers, Ollama doesn't require an API key
-3. **CORS Configuration**: Requires CORS to be enabled on the Ollama server
-4. **Custom Models**: Supports user-defined custom models with configurable context windows
-5. **Configuration Requirements**: Requires both a base URL and at least one custom model to be configured
-6. **Privacy-Focused**: Provides a privacy-focused alternative to cloud-based LLM providers
+1. **ブラウザ互換性**: ブラウザ対応Ollamaライブラリ使用
+2. **APIキー不要**: 他プロバイダーと異なりAPIキー不要
+3. **CORS設定**: OllamaサーバーでCORS有効化必須
+4. **カスタムモデル**: ユーザー定義カスタムモデル対応（コンテキストウィンドウ設定可）
+5. **設定要件**: ベースURLと少なくとも1つのカスタムモデル設定必須
+6. **プライバシー重視**: クラウド型LLMプロバイダーの代替となるプライバシー重視設計
 
-The provider system follows these design patterns:
+プロバイダーシステムは以下の設計パターンを採用：
 
-1. **Interface Segregation**: Each provider implements a common interface
-2. **Factory Pattern**: A factory function creates the appropriate provider
-3. **Adapter Pattern**: Each provider adapts its specific API to the common interface
-4. **Strategy Pattern**: Different providers can be swapped at runtime
-5. **Singleton Pattern**: The ConfigManager provides a single point of access to configuration
+1. **インターフェース分離**: 各プロバイダーが共通インターフェース実装
+2. **ファクトリーパターン**: ファクトリー関数で適切なプロバイダー生成
+3. **アダプターパターン**: 各プロバイダーが独自APIを共通インターフェースに適合
+4. **ストラテジーパターン**: 実行時にプロバイダー切替可能
+5. **シングルトンパターン**: ConfigManagerが設定の単一アクセスポイント提供
 
-## File Organization
+## ファイル構成
 
-The project follows a modular structure with clear separation of concerns:
+プロジェクトは、関心の分離を明確にしたモジュラー構成です。
 
-- Each module has its own directory
-- Components are organized by functionality
-- Types are defined close to where they are used
-- Hooks encapsulate related state and functionality
-- Utility functions are separated into dedicated files
+- 各モジュールは独自ディレクトリを持つ
+- コンポーネントは機能別に整理
+- 型定義は使用箇所近くに配置
+- フックは関連状態・機能をカプセル化
+- ユーティリティ関数は専用ファイルに分離
 
-## Design Principles
+## 設計原則
 
-1. **Separation of Concerns**: Each component and module has a single responsibility
-2. **Modularity**: Components and modules can be developed and tested independently
-3. **Reusability**: Common functionality is extracted into reusable components and hooks
-4. **Type Safety**: TypeScript is used throughout the project for type safety
-5. **Maintainability**: Code is organized to be easy to understand and maintain
-6. **Resilience**: Self-healing mechanisms are implemented for critical components
-7. **Lifecycle Management**: Extension installation, updates, and uninstallation are properly handled
-8. **Provider Abstraction**: LLM providers are abstracted behind a common interface
+1. **関心の分離**: 各コンポーネント・モジュールは単一責任
+2. **モジュール性**: 独立開発・テスト可能な構成
+3. **再利用性**: 共通機能は再利用可能なコンポーネント・フックに抽出
+4. **型安全性**: TypeScriptによる型安全性確保
+5. **保守性**: 理解・保守しやすいコード整理
+6. **耐障害性**: 重要コンポーネントに自己修復機構実装
+7. **ライフサイクル管理**: 拡張機能のインストール・更新・アンインストール対応
+8. **プロバイダー抽象化**: LLMプロバイダーは共通インターフェースで抽象化
+
