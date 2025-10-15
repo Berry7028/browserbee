@@ -1,4 +1,4 @@
-import { faTrash, faBrain } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faBookBookmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React from 'react';
 
@@ -14,29 +14,32 @@ export const OutputHeader: React.FC<OutputHeaderProps> = ({
   isProcessing
 }) => {
   return (
-    <div className="flex justify-between items-center bg-base-300 p-3">
-      <div className="card-title text-base-content text-lg">
-        Output
+    <div className="flex items-center justify-between border-b border-white/8 px-8 py-6">
+      <div className="flex flex-col gap-1">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.45em] text-white/35">
+          Conversation
+        </p>
+        <p className="text-lg font-semibold text-white">
+          現在のセッション
+        </p>
       </div>
       <div className="flex items-center gap-2">
-        <div className="tooltip tooltip-bottom" data-tip="Reflect and learn from this session">
-          <button 
-            onClick={onReflectAndLearn}
-            className="btn btn-sm btn-outline btn-primary"
-            disabled={isProcessing}
-          >
-            <FontAwesomeIcon icon={faBrain} />
-          </button>
-        </div>
-        <div className="tooltip tooltip-bottom" data-tip="Clear conversation history and LLM context">
-          <button 
-            onClick={onClearHistory}
-            className="btn btn-sm btn-outline"
-            disabled={isProcessing}
-          >
-            <FontAwesomeIcon icon={faTrash} />
-          </button>
-        </div>
+        <button
+          onClick={onReflectAndLearn}
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white transition hover:bg-white/15 disabled:opacity-40"
+          disabled={isProcessing}
+          title="Memori"
+        >
+          <FontAwesomeIcon icon={faBookBookmark} />
+        </button>
+        <button
+          onClick={onClearHistory}
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white/80 transition hover:bg-red-500/20 hover:text-red-100 disabled:opacity-40"
+          disabled={isProcessing}
+          title="履歴をクリア"
+        >
+          <FontAwesomeIcon icon={faTrash} />
+        </button>
       </div>
     </div>
   );

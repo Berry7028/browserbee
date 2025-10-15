@@ -12,9 +12,10 @@ interface ProviderOption {
 
 interface ProviderSelectorProps {
   isProcessing: boolean;
+  variant?: 'default' | 'compact';
 }
 
-export function ProviderSelector({ isProcessing }: ProviderSelectorProps) {
+export function ProviderSelector({ isProcessing, variant = 'default' }: ProviderSelectorProps) {
   const [options, setOptions] = useState<ProviderOption[]>([]);
   const [currentProvider, setCurrentProvider] = useState<string>('');
   const [currentModel, setCurrentModel] = useState<string>('');
@@ -137,42 +138,63 @@ export function ProviderSelector({ isProcessing }: ProviderSelectorProps) {
     window.open('https://parsaghaffari.github.io/browserbee/', '_blank');
   };
 
+  const baseClasses =
+    variant === 'compact'
+      ? 'flex w-full items-center justify-between rounded-3xl border border-white/12 bg-[#111823] px-4 py-3 text-sm text-white/80 shadow-[0_25px_80px_-60px_rgba(0,0,0,1)]'
+      : 'flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70';
+
+  const buttonClasses =
+    variant === 'compact'
+      ? 'flex h-9 w-9 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white transition hover:bg-white/15 disabled:opacity-40'
+      : 'flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/[0.06] text-white/70 transition hover:text-white disabled:opacity-40';
+
+  const selectClasses =
+    variant === 'compact'
+      ? 'appearance-none bg-transparent pr-8 text-sm font-medium text-white/90 outline-none transition focus:text-white disabled:opacity-40'
+      : 'appearance-none bg-transparent pr-8 text-sm font-medium text-white/80 outline-none transition focus:text-white disabled:opacity-40';
+
   return (
-    <div className="flex items-center justify-between mb-2 px-0">
-      <div className="flex items-center">
-        <button 
-          className="btn btn-ghost btn-xs p-1" 
+    <div className={baseClasses}>
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <button
+          className={buttonClasses}
           onClick={openOptionsPage}
           title="Open Settings"
           disabled={isProcessing}
         >
-          <FontAwesomeIcon icon={faCog} className="text-gray-500 hover:text-gray-700" />
+          <FontAwesomeIcon icon={faCog} />
         </button>
-        <select 
-          className="select select-ghost select-xs select-bordered w-auto focus:outline-none focus:ring-0 pl-0"
-          value={`${currentProvider}|${currentModel}`}
-          onChange={handleChange}
-          disabled={isProcessing}
-        >
-          {options.map(option => (
-            option.models.map(model => (
-              <option 
-                key={`${option.provider}|${model.id}`} 
-                value={`${option.provider}|${model.id}`}
-              >
-                {option.displayName} - {model.name}
-              </option>
-            ))
-          ))}
-        </select>
+        <div className="relative min-w-[200px] flex-1">
+          <select
+            className={selectClasses}
+            value={`${currentProvider}|${currentModel}`}
+            onChange={handleChange}
+            disabled={isProcessing}
+          >
+            {options.map((option) =>
+              option.models.map((model) => (
+                <option
+                  key={`${option.provider}|${model.id}`}
+                  value={`${option.provider}|${model.id}`}
+                  className="bg-[#0f1621] text-white"
+                >
+                  {option.displayName} ・ {model.name}
+                </option>
+              ))
+            )}
+          </select>
+          <span className="pointer-events-none absolute inset-y-0 right-1 flex items-center text-white/30">
+            ▾
+          </span>
+        </div>
       </div>
-      <button 
-        className="btn btn-ghost btn-xs p-1" 
+      <button
+        className={buttonClasses}
         onClick={openHelpPage}
         title="Open Help"
         disabled={isProcessing}
       >
-        <FontAwesomeIcon icon={faCircleInfo} className="text-gray-500 hover:text-gray-700" />
+        <FontAwesomeIcon icon={faCircleInfo} />
       </button>
     </div>
   );

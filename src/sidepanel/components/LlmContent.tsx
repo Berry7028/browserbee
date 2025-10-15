@@ -68,25 +68,25 @@ export const LlmContent: React.FC<LlmContentProps> = ({ content }) => {
               remarkPlugins={[remarkGfm]}
               components={{
                 // Apply Tailwind classes to markdown elements
-                p: ({node, ...props}) => <p className="mb-2" {...props} />,
-                h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-2" {...props} />,
-                h2: ({node, ...props}) => <h2 className="text-lg font-bold mb-2" {...props} />,
-                h3: ({node, ...props}) => <h3 className="text-md font-bold mb-2" {...props} />,
-                ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-2" {...props} />,
-                ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-2" {...props} />,
-                li: ({node, ...props}) => <li className="mb-1" {...props} />,
-                a: ({node, ...props}) => <a className="text-primary underline" {...props} />,
+                p: ({node, ...props}) => <p className="mb-3 text-[15px] text-white/80" {...props} />,
+                h1: ({node, ...props}) => <h1 className="mb-4 text-2xl font-semibold text-white" {...props} />,
+                h2: ({node, ...props}) => <h2 className="mb-3 text-xl font-semibold text-white" {...props} />,
+                h3: ({node, ...props}) => <h3 className="mb-2 text-lg font-semibold text-white" {...props} />,
+                ul: ({node, ...props}) => <ul className="mb-3 list-disc space-y-1 pl-6 text-white/80" {...props} />,
+                ol: ({node, ...props}) => <ol className="mb-3 list-decimal space-y-1 pl-6 text-white/80" {...props} />,
+                li: ({node, ...props}) => <li className="text-[15px]" {...props} />,
+                a: ({node, ...props}) => <a className="text-sky-400 underline hover:text-sky-300" {...props} />,
                 code: ({node, className, children, ...props}) => {
                   const match = /language-(\w+)/.exec(className || '');
                   const isInline = !match && !className;
                   return isInline 
-                    ? <code className="bg-base-300 px-1 rounded text-sm" {...props}>{children}</code>
-                    : <pre className="bg-base-300 p-2 rounded text-sm overflow-auto my-2"><code {...props}>{children}</code></pre>;
+                    ? <code className="rounded bg-white/[0.08] px-1.5 py-0.5 text-[13px] text-white" {...props}>{children}</code>
+                    : <pre className="my-3 overflow-auto rounded-2xl border border-white/10 bg-black/40 p-4 text-sm text-white"><code {...props}>{children}</code></pre>;
                 },
-                blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-base-300 pl-4 italic my-2" {...props} />,
-                table: ({node, ...props}) => <table className="border-collapse table-auto w-full my-2" {...props} />,
-                th: ({node, ...props}) => <th className="border border-base-300 px-4 py-2 text-left" {...props} />,
-                td: ({node, ...props}) => <td className="border border-base-300 px-4 py-2" {...props} />,
+                blockquote: ({node, ...props}) => <blockquote className="my-3 border-l-4 border-white/20 bg-white/[0.04] px-4 py-2 italic text-white/70" {...props} />,
+                table: ({node, ...props}) => <table className="my-3 w-full table-auto border-collapse text-white/80" {...props} />,
+                th: ({node, ...props}) => <th className="border border-white/20 bg-white/[0.05] px-4 py-2 text-left text-white" {...props} />,
+                td: ({node, ...props}) => <td className="border border-white/10 px-4 py-2" {...props} />,
               }}
             >
               {part.content}

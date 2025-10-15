@@ -17,30 +17,33 @@ export const MessageDisplay: React.FC<MessageDisplayProps> = ({
   // Always show all messages
   const filteredMessages = messages;
 
-  if (filteredMessages.length === 0 && Object.keys(streamingSegments).length === 0) {
-    return <p className="text-gray-500">No output yet</p>;
-  }
-
   return (
-    <div>
+    <div className="space-y-6">
       {/* Render completed messages in their original order */}
       {filteredMessages.map((msg, index) => (
-        <div key={`msg-${index}`} className="mb-2">
+        <div key={`msg-${index}`}>
           {msg.type === 'system' ? (
-            <div className="bg-base-200 px-3 py-1 rounded text-gray-500 text-sm">
-              {msg.content}
+            <div className="flex justify-center">
+              <div className="rounded-full border border-white/12 bg-[#111b29] px-4 py-1 text-xs font-medium text-white/65">
+                {msg.content}
+              </div>
             </div>
           ) : msg.type === 'screenshot' && msg.imageData ? (
             <ScreenshotMessage imageData={msg.imageData} mediaType={msg.mediaType} />
           ) : (
-            <LlmContent content={msg.content} />
+            <div className="rounded-3xl border border-white/12 bg-[#101a27] px-6 py-5 text-[15px] leading-7 text-white/85 shadow-[0_24px_70px_-60px_rgba(0,0,0,0.9)]">
+              <LlmContent content={msg.content} />
+            </div>
           )}
         </div>
       ))}
       
       {/* Render currently streaming segments at the end */}
       {isStreaming && Object.entries(streamingSegments).map(([id, content]) => (
-        <div key={`segment-${id}`} className="mb-2 animate-pulse">
+        <div
+          key={`segment-${id}`}
+          className="rounded-3xl border border-white/12 bg-[#101a27] px-6 py-5 text-[15px] leading-7 text-white/70 shadow-[0_24px_70px_-60px_rgba(0,0,0,0.9)] animate-pulse"
+        >
           <LlmContent content={content} />
         </div>
       ))}

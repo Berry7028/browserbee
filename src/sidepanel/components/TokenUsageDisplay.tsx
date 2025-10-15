@@ -1,4 +1,4 @@
-import { faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faArrowDown, faGaugeHigh } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useState } from 'react';
 import { ConfigManager, ProviderConfig } from '../../background/configManager';
@@ -97,14 +97,27 @@ export function TokenUsageDisplay() {
   // };
 
   return (
-    <div className="card bg-base-100 shadow-sm p-3 mt-2 text-xs">
-      <div className="flex justify-between items-center">
-        <span className="font-medium">Token Usage:</span>
-        <span><FontAwesomeIcon icon={faArrowUp} /> {formatTokenCount(usage.inputTokens)} <FontAwesomeIcon icon={faArrowDown} /> {formatTokenCount(usage.outputTokens)}</span>
+    <div className="flex w-full items-center justify-between rounded-3xl border border-white/12 bg-[#0f1621] px-4 py-3 text-xs text-white/75">
+      <div className="flex items-center gap-2 text-white/70">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white">
+          <FontAwesomeIcon icon={faGaugeHigh} size="sm" />
+        </span>
+        <span className="text-[13px] font-medium tracking-wide text-white/90">
+          Token usage
+        </span>
       </div>
-      <div className="flex justify-between mt-1">
-        <span className="font-medium">Estimated Cost:</span>
-        <span>${usage.cost.toFixed(6)}</span>
+      <div className="flex items-center gap-4 text-[13px] font-medium text-white/70">
+        <span className="flex items-center gap-1">
+          <FontAwesomeIcon icon={faArrowUp} className="text-emerald-300/80" />
+          {formatTokenCount(usage.inputTokens)}
+        </span>
+        <span className="flex items-center gap-1">
+          <FontAwesomeIcon icon={faArrowDown} className="text-sky-300/80" />
+          {formatTokenCount(usage.outputTokens)}
+        </span>
+        <span className="rounded-full bg-white/[0.08] px-3 py-1 text-xs text-white/80">
+          ${usage.cost.toFixed(6)}
+        </span>
       </div>
     </div>
   );

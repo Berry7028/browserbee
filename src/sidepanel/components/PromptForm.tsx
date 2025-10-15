@@ -2,6 +2,7 @@ import { faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
+import { TokenUsageDisplay } from './TokenUsageDisplay';
 
 interface PromptFormProps {
   onSubmit: (prompt: string) => void;
@@ -26,51 +27,46 @@ export const PromptForm: React.FC<PromptFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 relative">
-      <div className="w-full">
+    <form onSubmit={handleSubmit} className="mt-4">
+      <div className="relative overflow-hidden rounded-3xl border border-white/12 bg-[#101a27] px-5 py-5 transition focus-within:border-white/40">
+        <div className="mb-4 w-full">
+          <TokenUsageDisplay />
+        </div>
         <TextareaAutosize
-          className="textarea textarea-bordered w-full pr-12"
+          className="max-h-64 min-h-[44px] w-full resize-none bg-transparent pr-16 text-[15px] leading-6 text-white placeholder:text-white/30 focus:outline-none"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={(e) => {
-            // Check if Enter was pressed without Shift key
             if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault(); // Prevent default behavior (new line)
-              handleSubmit(e); // Submit the form
+              e.preventDefault();
+              handleSubmit(e);
             }
-            // Allow Shift+Enter to create a new line (default behavior)
           }}
-          placeholder={tabStatus === 'detached' 
-            ? "Tab connection lost. Please refresh the tab to continue." 
-            : "Type a message..."}
+          placeholder={
+            tabStatus === 'detached'
+              ? 'タブとの接続が切れました。再読み込みしてから試してください。'
+              : 'ページに関する質問や指示を入力してください…'
+          }
           autoFocus
           disabled={isProcessing || tabStatus === 'detached'}
           minRows={1}
-          maxRows={10}
-          style={{ 
-            resize: 'none',
-            minHeight: '40px',
-            maxHeight: '300px',
-            overflow: 'auto'
-          } as any}
+          maxRows={8}
         />
         {isProcessing ? (
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={onCancel}
-            className="btn btn-sm btn-circle btn-error absolute"
-            style={{ bottom: '5px', right: '5px' }}
-            title="Cancel"
+            className="absolute bottom-3.5 right-3.5 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/80 text-white shadow-lg shadow-red-500/40 transition hover:bg-red-500 disabled:opacity-40"
+            title="キャンセル"
           >
             <FontAwesomeIcon icon={faXmark} />
           </button>
         ) : (
-          <button 
-            type="submit" 
-            className="btn btn-sm btn-circle btn-primary absolute"
-            style={{ bottom: '5px', right: '5px' }}
+          <button
+            type="submit"
+            className="absolute bottom-3.5 right-3.5 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-fuchsia-500 text-white shadow-lg shadow-indigo-500/40 transition hover:shadow-indigo-500/60 disabled:opacity-40"
             disabled={!prompt.trim() || tabStatus === 'detached'}
-            title={tabStatus === 'detached' ? "Refresh tab to continue" : "Execute"}
+            title={tabStatus === 'detached' ? 'タブを再読み込みしてください' : '送信'}
           >
             <FontAwesomeIcon icon={faPaperPlane} />
           </button>

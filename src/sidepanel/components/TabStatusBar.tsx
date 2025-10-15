@@ -6,12 +6,14 @@ interface TabStatusBarProps {
   tabId: number | null;
   tabTitle: string;
   tabStatus: 'attached' | 'detached' | 'unknown' | 'running' | 'idle' | 'error';
+  variant?: 'inline' | 'card';
 }
 
 export const TabStatusBar: React.FC<TabStatusBarProps> = ({
   tabId,
   tabTitle,
-  tabStatus
+  tabStatus,
+  variant = 'card'
 }) => {
   const [tabUrl, setTabUrl] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -93,45 +95,75 @@ export const TabStatusBar: React.FC<TabStatusBarProps> = ({
     }, 500);
   };
   
+  const containerClasses =
+    variant === 'inline'
+      ? 'flex w-full items-center justify-between gap-3 rounded-3xl border border-white/12 bg-[#111823] px-5 py-3 text-sm text-white/80 shadow-[0_25px_80px_-60px_rgba(0,0,0,1)]'
+      : 'flex max-w-[240px] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-2 text-xs text-white/70 backdrop-blur';
+
+  const titleClasses =
+    variant === 'inline'
+      ? 'flex-1 truncate text-left text-white/85 transition hover:text-white font-medium'
+      : 'flex-1 truncate text-left text-white/80 transition hover:text-white';
+
+  const buttonClasses =
+    variant === 'inline'
+      ? 'flex h-9 w-9 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white transition hover:bg-white/18 disabled:opacity-40'
+      : 'flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.08] text-white transition hover:bg-white/[0.18] disabled:opacity-50';
+
+  const dotClasses =
+    variant === 'inline'
+      ? 'h-2.5 w-2.5 rounded-full'
+      : 'h-2.5 w-2.5 rounded-full';
+
   return (
-    <div className="text-sm bg-base-300 rounded-md px-2 py-1 border border-base-content border-opacity-10 flex items-center justify-between max-w-[200px]">
-      <div className="flex items-center flex-grow overflow-hidden">
-        <div className={`w-2 h-2 rounded-full mr-2 flex-shrink-0 ${
-          tabStatus === 'attached' ? 'bg-green-500 animate-pulse' : 
-          tabStatus === 'detached' ? 'bg-red-500' : 
-          tabStatus === 'running' ? 'bg-blue-500 animate-pulse' :
-          tabStatus === 'idle' ? 'bg-green-500' :
-          tabStatus === 'error' ? 'bg-red-500 animate-pulse' : 'bg-yellow-500'
-        }`} title={
-          tabStatus === 'attached' ? 'Connected' : 
-          tabStatus === 'detached' ? 'Disconnected' : 
-          tabStatus === 'running' ? 'Agent Running' :
-          tabStatus === 'idle' ? 'Agent Idle' :
-          tabStatus === 'error' ? 'Agent Error' : 'Unknown'
-        }></div>
-        <span 
-          className="cursor-pointer hover:underline hover:text-primary truncate"
-          onClick={handleTabClick}
-          title={`${tabTitle}${tabUrl ? `\n${tabUrl}` : ''}`}
-        > 
-          {tabTitle}
-        </span>
-      </div>
-      
-      <div className="flex items-center ml-2">
-          <button 
-            className="px-1.5 py-0.5 bg-base-200 hover:bg-primary hover:text-primary-content rounded text-xs border border-base-content border-opacity-20"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            title="Attach to current tab"
-          >
-            <FontAwesomeIcon 
-              icon={faSync} 
-              className={isRefreshing ? 'animate-spin' : ''} 
-              size="xs"
-            />
-          </button>
-      </div>
+    <div className={containerClasses}>
+      <span
+        className={`${dotClasses} ${
+          tabStatus === 'attached'
+            ? 'bg-emerald-400 animate-pulse'
+            : tabStatus === 'detached'
+            ? 'bg-rose-500'
+            : tabStatus === 'running'
+            ? 'bg-sky-400 animate-pulse'
+            : tabStatus === 'idle'
+            ? 'bg-emerald-300'
+            : tabStatus === 'error'
+            ? 'bg-rose-500 animate-pulse'
+            : 'bg-amber-400'
+        }`}
+        title={
+          tabStatus === 'attached'
+            ? 'Connected'
+            : tabStatus === 'detached'
+            ? 'Disconnected'
+            : tabStatus === 'running'
+            ? 'Agent Running'
+            : tabStatus === 'idle'
+            ? 'Agent Idle'
+            : tabStatus === 'error'
+            ? 'Agent Error'
+            : 'Unknown'
+        }
+      />
+      <button
+        className={titleClasses}
+        onClick={handleTabClick}
+        title={`${tabTitle}${tabUrl ? `\n${tabUrl}` : ''}`}
+      >
+        {tabTitle}
+      </button>
+      <button
+        className={buttonClasses}
+        onClick={handleRefresh}
+        disabled={isRefreshing}
+        title="Attach to current tab"
+      >
+        <FontAwesomeIcon
+          icon={faSync}
+          className={isRefreshing ? 'animate-spin' : ''}
+          size="xs"
+        />
+      </button>
     </div>
   );
 };

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faComments } from '@fortawesome/free-solid-svg-icons';
 import { ConfigManager } from '../background/configManager';
 import { TokenTrackingService } from '../tracking/tokenTrackingService';
 import { ApprovalRequest } from './components/ApprovalRequest';
@@ -7,7 +9,6 @@ import { OutputHeader } from './components/OutputHeader';
 import { PromptForm } from './components/PromptForm';
 import { ProviderSelector } from './components/ProviderSelector';
 import { TabStatusBar } from './components/TabStatusBar';
-import { TokenUsageDisplay } from './components/TokenUsageDisplay';
 import { useChromeMessaging } from './hooks/useChromeMessaging';
 import { useMessageManagement } from './hooks/useMessageManagement';
 import { useTabManagement } from './hooks/useTabManagement';
@@ -282,26 +283,34 @@ export function SidePanel() {
     chrome.runtime.openOptionsPage();
   };
 
-  return (
-    <div className="flex flex-col h-screen p-4 bg-base-200">
-      <header className="mb-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold text-primary">BrowserBee 🐝</h1>
-        <TabStatusBar
-          tabId={tabId}
-          tabTitle={tabTitle}
-          tabStatus={tabStatus}
-        />
-      </div>
-      <p className="text-sm text-gray-600 mt-2">
-          What can I do for you today?
-        </p>
-      </header>
+  const isConversationEmpty =
+    messages.length === 0 && Object.keys(streamingSegments).length === 0;
 
-      {hasConfiguredProviders ? (
-        <>
-          <div className="flex flex-col flex-grow gap-4 overflow-hidden md:flex-row shadow-sm">
-            <div className="card bg-base-100 shadow-md flex-1 flex flex-col overflow-hidden">
+  return (
+    <div className="min-h-screen bg-[#0a1119] text-slate-100">
+      <div className="mx-auto flex h-screen max-w-4xl flex-col gap-6 px-6 py-8">
+        <header className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-3xl border border-white/12 bg-[#111823] text-lg text-white">
+              <FontAwesomeIcon icon={faComments} />
+            </div>
+            <div className="flex min-w-[220px] flex-1 max-w-sm">
+              <ProviderSelector isProcessing={isProcessing} variant="compact" />
+            </div>
+            <div className="flex min-w-[220px] flex-1 max-w-md">
+              <TabStatusBar
+                tabId={tabId}
+                tabTitle={tabTitle}
+                tabStatus={tabStatus}
+                variant="inline"
+              />
+            </div>
+          </div>
+        </header>
+
+        {hasConfiguredProviders ? (
+          <>
+            <div className="flex flex-1 flex-col gap-4 overflow-hidden rounded-3xl border border-white/10 bg-[#0f1621] shadow-[0_30px_120px_-60px_rgba(0,0,0,0.95)] backdrop-blur">
               <OutputHeader
                 onClearHistory={handleClearHistory}
                 onReflectAndLearn={handleReflectAndLearn}
@@ -309,57 +318,69 @@ export function SidePanel() {
               />
               <div
                 ref={outputRef}
-                className="card-body p-3 overflow-auto bg-base-100 flex-1"
+                className="relative flex-1 overflow-auto px-8 py-10"
               >
-                <MessageDisplay
-                  messages={messages}
-                  streamingSegments={streamingSegments}
-                  isStreaming={isStreaming}
-                />
+                {isConversationEmpty ? (
+                  <div className="flex h-full flex-col items-center justify-center gap-6 text-center">
+                    <span className="rounded-full border border-white/10 px-4 py-1 text-xs tracking-[0.3em] text-white/40">
+                      READY
+                    </span>
+                    <p className="text-2xl font-semibold text-white/90">
+                      お手伝いできることはありますか？
+                    </p>
+                    <p className="max-w-md text-sm leading-6 text-white/40">
+                      画面の右下から、今見ているページに関する相談や操作を伝えてみてください。
+                    </p>
+                  </div>
+                ) : (
+                  <MessageDisplay
+                    messages={messages}
+                    streamingSegments={streamingSegments}
+                    isStreaming={isStreaming}
+                  />
+                )}
               </div>
             </div>
-          </div>
 
-          {/* Add Token Usage Display */}
-          <TokenUsageDisplay />
+            {approvalRequests.map((req) => (
+              <ApprovalRequest
+                key={req.requestId}
+                requestId={req.requestId}
+                toolName={req.toolName}
+                toolInput={req.toolInput}
+                reason={req.reason}
+                onApprove={handleApprove}
+                onReject={handleReject}
+              />
+            ))}
 
-          {/* Display approval requests */}
-          {approvalRequests.map(req => (
-            <ApprovalRequest
-              key={req.requestId}
-              requestId={req.requestId}
-              toolName={req.toolName}
-              toolInput={req.toolInput}
-              reason={req.reason}
-              onApprove={handleApprove}
-              onReject={handleReject}
+            <PromptForm
+              onSubmit={handleSubmit}
+              onCancel={handleCancel}
+              isProcessing={isProcessing}
+              tabStatus={tabStatus}
             />
-          ))}
-
-          <PromptForm
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            isProcessing={isProcessing}
-            tabStatus={tabStatus}
-          />
-          <ProviderSelector isProcessing={isProcessing} />
-        </>
-      ) : (
-        <div className="flex flex-col flex-grow items-center justify-center">
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-semibold mb-2">No LLM provider configured</h2>
-            <p className="text-gray-600 mb-4">
-              You need to configure an LLM provider before you can use BrowserBee.
+          </>
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center text-center">
+            <span className="rounded-full border border-white/10 px-4 py-1 text-xs tracking-[0.3em] text-white/40">
+              SETUP REQUIRED
+            </span>
+            <h2 className="mt-4 text-2xl font-semibold text-white">
+              プロバイダーが未設定です
+            </h2>
+            <p className="mt-3 max-w-sm text-sm leading-6 text-white/50">
+              BrowserBeeを利用するには、まず設定画面でLLMプロバイダーとモデルを設定してください。
             </p>
             <button
               onClick={navigateToOptions}
-              className="btn btn-primary"
+              className="mt-6 flex items-center gap-2 rounded-full bg-white text-sm font-medium text-[#0e1116] transition hover:scale-105 hover:bg-slate-100 px-5 py-2.5"
             >
-              Configure Providers
+              設定画面を開く
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
