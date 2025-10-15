@@ -18,6 +18,7 @@ export const PromptForm: React.FC<PromptFormProps> = ({
   tabStatus
 }) => {
   const [prompt, setPrompt] = useState('');
+  const [isComposing, setIsComposing] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +37,11 @@ export const PromptForm: React.FC<PromptFormProps> = ({
           className="max-h-64 min-h-[44px] w-full resize-none bg-transparent pr-16 text-[15px] leading-6 text-white placeholder:text-white/30 focus:outline-none"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
+          onCompositionStart={() => setIsComposing(true)}
+          onCompositionEnd={() => setIsComposing(false)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            // Don't submit if IME is composing (Japanese input)
+            if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
               e.preventDefault();
               handleSubmit(e);
             }

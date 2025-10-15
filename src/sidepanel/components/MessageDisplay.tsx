@@ -2,6 +2,8 @@ import React from 'react';
 import { Message } from '../types';
 import { LlmContent } from './LlmContent';
 import { ScreenshotMessage } from './ScreenshotMessage';
+import { ToolCallMessage } from './ToolCallMessage';
+import { UserMessage } from './UserMessage';
 
 interface MessageDisplayProps {
   messages: Message[];
@@ -14,20 +16,21 @@ export const MessageDisplay: React.FC<MessageDisplayProps> = ({
   streamingSegments,
   isStreaming
 }) => {
-  // Always show all messages
-  const filteredMessages = messages;
+  // Filter out system messages only, keep user, AI, tool, and screenshots
+  const filteredMessages = messages.filter(msg => msg.type !== 'system');
 
   return (
     <div className="space-y-6">
       {/* Render completed messages in their original order */}
       {filteredMessages.map((msg, index) => (
         <div key={`msg-${index}`}>
-          {msg.type === 'system' ? (
-            <div className="flex justify-center">
-              <div className="rounded-full border border-white/12 bg-[#1a1a1a] px-4 py-1 text-xs font-medium text-white/65">
-                {msg.content}
-              </div>
-            </div>
+          {msg.type === 'user' ? (
+            <UserMessage content={msg.content} timestamp={msg.timestamp} />
+          ) : msg.type === 'tool' ? (
+            <ToolCallMessage 
+              toolName={msg.toolName || ''} 
+              toolInput={msg.toolInput || msg.content} 
+            />
           ) : msg.type === 'screenshot' && msg.imageData ? (
             <ScreenshotMessage imageData={msg.imageData} mediaType={msg.mediaType} />
           ) : (

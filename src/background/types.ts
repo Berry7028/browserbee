@@ -74,10 +74,12 @@ export interface ReflectAndLearnMessage {
 export interface UpdateOutputMessage {
   action: 'updateOutput';
   content: {
-    type: 'system' | 'llm' | 'screenshot';
+    type: 'system' | 'llm' | 'screenshot' | 'tool';
     content: string;
     imageData?: string;
     mediaType?: string;
+    toolName?: string;
+    toolInput?: string;
   };
   tabId?: number;
   windowId?: number;

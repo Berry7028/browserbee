@@ -735,11 +735,23 @@ export async function executePrompt(prompt: string, tabId?: number, isReflection
         }
       },
       onToolOutput: (content) => {
-        // Normal handling for tool outputs
-        sendUIMessage('updateOutput', {
-          type: 'system',
-          content: content
-        }, targetTabId);
+        // Parse tool output to extract tool name and input
+        const toolMatch = content.match(/🕹️ tool: (.+?) \| args: (.+)/);
+        if (toolMatch) {
+          const [, toolName, toolInput] = toolMatch;
+          sendUIMessage('updateOutput', {
+            type: 'tool',
+            content: '',
+            toolName,
+            toolInput
+          }, targetTabId);
+        } else {
+          // Normal handling for other system outputs
+          sendUIMessage('updateOutput', {
+            type: 'system',
+            content: content
+          }, targetTabId);
+        }
       },
       onToolEnd: (result) => {
         // Check if this is a screenshot result by trying to parse it as JSON

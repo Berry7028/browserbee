@@ -1,5 +1,5 @@
 // Define message types
-export type MessageType = 'system' | 'llm' | 'screenshot';
+export type MessageType = 'system' | 'llm' | 'screenshot' | 'user' | 'tool';
 
 export interface Message {
   type: MessageType;
@@ -9,6 +9,9 @@ export interface Message {
   isStreaming?: boolean;
   imageData?: string;
   mediaType?: string;
+  timestamp?: number; // Add timestamp for chat history
+  toolName?: string; // Tool name for tool messages
+  toolInput?: string; // Tool input for tool messages
 }
 
 // Chrome message types

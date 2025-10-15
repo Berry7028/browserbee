@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComments } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useState, useEffect } from 'react';
 import { ConfigManager } from '../background/configManager';
 import { TokenTrackingService } from '../tracking/tokenTrackingService';
 import { ApprovalRequest } from './components/ApprovalRequest';
@@ -69,12 +69,12 @@ export function SidePanel() {
     outputRef,
     addMessage,
     addSystemMessage,
+    addUserMessage,
     updateStreamingChunk,
     finalizeStreamingSegment,
     startNewSegment,
     completeStreaming,
-    clearMessages,
-    currentSegmentId
+    clearMessages
   } = useMessageManagement();
 
   // Heartbeat interval for checking agent status
@@ -219,8 +219,8 @@ export function SidePanel() {
     // Update the tab status to running
     setTabStatus('running');
 
-    // Add a system message to indicate a new prompt
-    addSystemMessage(`New prompt: "${prompt}"`);
+    // Add the user message to the chat
+    addUserMessage(prompt);
 
     try {
       await executePrompt(prompt);
