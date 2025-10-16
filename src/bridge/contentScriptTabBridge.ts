@@ -204,15 +204,46 @@ export class ContentScriptTabBridge implements TabBridge {
     const quality = options?.quality ?? 40;
     const fullPage = options?.fullPage ?? false;
 
-    if (!this.windowId && fullPage) {
-      throw new Error("Full page screenshots require a known window context.");
+    const tab = await chrome.tabs.get(this.tabId);
+    const resolvedWindowId = this.windowId ?? tab.windowId;
+
+    if (resolvedWindowId === undefined || resolvedWindowId === chrome.windows.WINDOW_ID_NONE) {
+      throw new Error("Unable to determine window context for screenshot");
     }
 
-    const windowId = this.windowId ?? chrome.windows.WINDOW_ID_CURRENT;
-    const dataUrl = await chrome.tabs.captureVisibleTab(windowId, {
-      format,
-      quality,
-    });
+    let restoreActiveTab: (() => Promise<void>) | null = null;
+
+    if (!tab.active) {
+      const [currentlyActive] = await chrome.tabs.query({ windowId: resolvedWindowId, active: true });
+      const previousActiveId = currentlyActive?.id;
+
+      await chrome.tabs.update(this.tabId, { active: true });
+      await this.waitForTabActivation(resolvedWindowId, this.tabId);
+      await this.delay(100);
+
+      restoreActiveTab = async () => {
+        if (previousActiveId && previousActiveId !== this.tabId) {
+          try {
+            await chrome.tabs.update(previousActiveId, { active: true });
+          } catch {
+            // Ignore failures when restoring the previously active tab
+          }
+        }
+      };
+    }
+
+    let dataUrl: string | undefined;
+
+    try {
+      dataUrl = await chrome.tabs.captureVisibleTab(resolvedWindowId, {
+        format,
+        quality,
+      });
+    } finally {
+      if (restoreActiveTab) {
+        await restoreActiveTab();
+      }
+    }
 
     if (!dataUrl) {
       throw new Error("Failed to capture screenshot");
@@ -235,6 +266,29 @@ export class ContentScriptTabBridge implements TabBridge {
       format,
       fullPage,
     };
+  }
+
+  private waitForTabActivation(windowId: number, tabId: number): Promise<void> {
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        chrome.tabs.onActivated.removeListener(listener);
+        resolve();
+      }, 500);
+
+      const listener = (activeInfo: chrome.tabs.TabActiveInfo) => {
+        if (activeInfo.tabId === tabId && activeInfo.windowId === windowId) {
+          clearTimeout(timeout);
+          chrome.tabs.onActivated.removeListener(listener);
+          resolve();
+        }
+      };
+
+      chrome.tabs.onActivated.addListener(listener);
+    });
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   resizeImage(options: ResizeImageOptions): Promise<ResizeImageResult> {
