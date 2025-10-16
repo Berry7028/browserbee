@@ -1,4 +1,3 @@
-import type { Page } from "playwright-crx";
 import { ConfigManager, ProviderConfig } from "../background/configManager";
 import { createProvider } from "../models/providers/factory";
 import { LLMProvider } from "../models/providers/types";
@@ -10,6 +9,7 @@ import { PromptManager } from "./PromptManager";
 import { ToolManager } from "./ToolManager";
 import { getAllTools } from "./tools/index";
 import { BrowserTool, ToolExecutionContext } from "./tools/types";
+import { TabBridge } from "../bridge";
 // Define our own DynamicTool interface to avoid import issues
 interface DynamicTool {
   name: string;
@@ -40,23 +40,26 @@ export class BrowserAgent {
   private memoryManager: MemoryManager;
   private errorHandler: ErrorHandler;
   private executionEngine: ExecutionEngine;
+  private readonly bridge: TabBridge;
 
   /**
    * Create a new BrowserAgent
    */
-  constructor(page: Page, config: ProviderConfig, provider?: LLMProvider) {
-    // Initialize the PageContextManager with the initial page
-    initializePageContext(page);
+  constructor(bridge: TabBridge, config: ProviderConfig, provider?: LLMProvider) {
+    this.bridge = bridge;
+
+    // Initialize the PageContextManager with the initial bridge
+    initializePageContext(bridge);
 
     // Use the provided provider or create a new one
     this.llmProvider = provider!;
 
     // Get all tools from the tools module and convert them to BrowserTool objects
-    const rawTools = getAllTools(page);
+    const rawTools = getAllTools(bridge);
     const browserTools = this.convertToBrowserTools(rawTools);
 
     // Initialize all the components
-    this.toolManager = new ToolManager(page, browserTools);
+    this.toolManager = new ToolManager(bridge, browserTools);
     this.promptManager = new PromptManager(this.toolManager.getTools());
     this.memoryManager = new MemoryManager(this.toolManager.getTools());
     this.errorHandler = new ErrorHandler();
@@ -173,9 +176,10 @@ export class BrowserAgent {
  * Create a new BrowserAgent
  */
 export async function createBrowserAgent(
-  page: Page,
+  bridge: TabBridge,
   apiKey: string
 ): Promise<BrowserAgent> {
+
   // Get provider configuration
   const configManager = ConfigManager.getInstance();
   let providerConfig: ProviderConfig;
@@ -214,7 +218,7 @@ export async function createBrowserAgent(
   });
 
   // Create the agent with the provider configuration and provider
-  return new BrowserAgent(page, providerConfig, provider);
+  return new BrowserAgent(bridge, providerConfig, provider);
 }
 
 /**

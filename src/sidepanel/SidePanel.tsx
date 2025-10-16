@@ -16,6 +16,7 @@ import { useTabManagement } from './hooks/useTabManagement';
 export function SidePanel() {
   // State for tab status
   const [tabStatus, setTabStatus] = useState<'attached' | 'detached' | 'unknown' | 'running' | 'idle' | 'error'>('unknown');
+  const [activeTool, setActiveTool] = useState<{ name: string; input?: string; startedAt?: number } | null>(null);
 
   // State for approval requests
   const [approvalRequests, setApprovalRequests] = useState<Array<{
@@ -74,7 +75,8 @@ export function SidePanel() {
     finalizeStreamingSegment,
     startNewSegment,
     completeStreaming,
-    clearMessages
+    clearMessages,
+    attachReasoningToLastMessage
   } = useMessageManagement();
 
   // Heartbeat interval for checking agent status
@@ -162,6 +164,16 @@ export function SidePanel() {
       completeStreaming();
       // Also update the tab status to idle to ensure the UI indicator changes
       setTabStatus('idle');
+    },
+    onUpdateReasoning: (reasoning) => {
+      attachReasoningToLastMessage(reasoning);
+    },
+    onToolStatusUpdate: (content) => {
+      if (content.status === 'running') {
+        setActiveTool({ name: content.toolName, input: content.toolInput, startedAt: content.startedAt });
+      } else {
+        setActiveTool(null);
+      }
     },
     onRequestApproval: (request) => {
       // Add the request to the list
@@ -291,9 +303,9 @@ export function SidePanel() {
       <div className="mx-auto flex h-screen max-w-4xl flex-col gap-6 px-6 py-8">
         <header className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-3xl border border-white/12 bg-[#151515] text-lg text-white">
+            {/* <div className="flex h-11 w-11 items-center justify-center rounded-3xl border border-white/12 bg-[#151515] text-lg text-white">
               <FontAwesomeIcon icon={faComments} />
-            </div>
+            </div> */}
             <div className="flex min-w-[220px] flex-1 max-w-sm">
               <ProviderSelector isProcessing={isProcessing} variant="compact" />
             </div>
@@ -307,6 +319,21 @@ export function SidePanel() {
             </div>
           </div>
         </header>
+
+        {activeTool && (
+          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.85)]">
+            <span className="relative flex h-3 w-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" aria-hidden />
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-300" aria-hidden />
+            </span>
+            <div className="flex flex-col">
+              <span className="font-semibold text-white/90">ツール実行中: {activeTool.name}</span>
+              {activeTool.input && (
+                <span className="text-xs text-white/50 truncate max-w-md">入力: {activeTool.input}</span>
+              )}
+            </div>
+          </div>
+        )}
 
         {hasConfiguredProviders ? (
           <>

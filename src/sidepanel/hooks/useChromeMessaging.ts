@@ -16,6 +16,7 @@ interface UseChromeMessagingProps {
   onProcessingComplete: () => void;
   onRequestApproval?: (request: { requestId: string, toolName: string, toolInput: string, reason: string }) => void;
   setTabTitle: (title: string) => void;
+  onUpdateReasoning?: (reasoning: string) => void;
   onTabStatusChanged?: (status: 'attached' | 'detached' | 'running' | 'idle' | 'error', tabId: number) => void;
   onTargetCreated?: (tabId: number, targetInfo: any) => void;
   onTargetDestroyed?: (tabId: number, url: string) => void;
@@ -25,6 +26,14 @@ interface UseChromeMessagingProps {
   onPageConsole?: (tabId: number, consoleInfo: any) => void;
   onPageError?: (tabId: number, error: string) => void;
   onAgentStatusUpdate?: (status: string, lastHeartbeat: number) => void;
+  onToolStatusUpdate?: (content: {
+    status: 'running' | 'completed' | 'failed';
+    toolName: string;
+    toolInput?: string;
+    startedAt?: number;
+    endedAt?: number;
+    message?: string;
+  }) => void;
 }
 
 export const useChromeMessaging = ({
@@ -42,6 +51,7 @@ export const useChromeMessaging = ({
   onProcessingComplete,
   onRequestApproval,
   setTabTitle,
+  onUpdateReasoning,
   onTabStatusChanged,
   onTargetCreated,
   onTargetDestroyed,
@@ -50,7 +60,8 @@ export const useChromeMessaging = ({
   onPageDialog,
   onPageConsole,
   onPageError,
-  onAgentStatusUpdate
+  onAgentStatusUpdate,
+  onToolStatusUpdate
 }: UseChromeMessagingProps) => {
 
   // Listen for updates from the background script
@@ -105,6 +116,10 @@ export const useChromeMessaging = ({
       } else if (message.action === 'updateScreenshot') {
         // Handle screenshot messages
         onUpdateScreenshot(message.content);
+      } else if (message.action === 'toolStatusUpdate' && onToolStatusUpdate) {
+        onToolStatusUpdate(message.content);
+      } else if (message.action === 'updateReasoning' && onUpdateReasoning && message.content?.reasoning) {
+        onUpdateReasoning(message.content.reasoning);
       } else if (message.action === 'processingComplete') {
         onProcessingComplete();
       } else if (message.action === 'requestApproval') {

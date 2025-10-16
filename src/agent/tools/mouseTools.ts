@@ -1,9 +1,9 @@
 import { DynamicTool } from "langchain/tools";
-import type { Page } from "playwright-crx";
+import type { TabBridge } from "../../bridge";
 import { ToolFactory } from "./types";
-import { withActivePage } from "./utils";
+import { withActiveBridge } from "./utils";
 
-export const browserMoveMouse: ToolFactory = (page: Page) =>
+export const browserMoveMouse: ToolFactory = (bridge: TabBridge) =>
   new DynamicTool({
     name: "browser_move_mouse",
     description:
@@ -11,12 +11,12 @@ export const browserMoveMouse: ToolFactory = (page: Page) =>
       "Input format: `x|y`  (example: `250|380`)",
     func: async (input: string) => {
       try {
-        return await withActivePage(page, async (activePage) => {
+        return await withActiveBridge(bridge, async (activeBridge) => {
           const [xRaw, yRaw] = input.split("|").map(s => s.trim());
           const x = Number(xRaw), y = Number(yRaw);
           if (Number.isNaN(x) || Number.isNaN(y))
             return "Error: expected `x|y` numbers (e.g. 120|240)";
-          await activePage.mouse.move(x, y);
+          await activeBridge.moveMouse({ x, y });
           return `Mouse moved to (${x}, ${y})`;
         });
       } catch (err) {
@@ -27,7 +27,7 @@ export const browserMoveMouse: ToolFactory = (page: Page) =>
     },
   });
 
-export const browserClickXY: ToolFactory = (page: Page) =>
+export const browserClickXY: ToolFactory = (bridge: TabBridge) =>
   new DynamicTool({
     name: "browser_click_xy",
     description:
@@ -35,12 +35,12 @@ export const browserClickXY: ToolFactory = (page: Page) =>
       "Input format: `x|y`  (example: `250|380`)",
     func: async (input: string) => {
       try {
-        return await withActivePage(page, async (activePage) => {
+        return await withActiveBridge(bridge, async (activeBridge) => {
           const [xRaw, yRaw] = input.split("|").map(s => s.trim());
           const x = Number(xRaw), y = Number(yRaw);
           if (Number.isNaN(x) || Number.isNaN(y))
             return "Error: expected `x|y` numbers (e.g. 120|240)";
-          await activePage.mouse.click(x, y);
+          await activeBridge.clickMouse({ x, y });
           return `Clicked at (${x}, ${y})`;
         });
       } catch (err) {
@@ -51,7 +51,7 @@ export const browserClickXY: ToolFactory = (page: Page) =>
     },
   });
 
-export const browserDrag: ToolFactory = (page: Page) =>
+export const browserDrag: ToolFactory = (bridge: TabBridge) =>
   new DynamicTool({
     name: "browser_drag",
     description:
@@ -59,14 +59,11 @@ export const browserDrag: ToolFactory = (page: Page) =>
       "Input format: `startX|startY|endX|endY`  (example: `100|200|300|400`)",
     func: async (input: string) => {
       try {
-        return await withActivePage(page, async (activePage) => {
+        return await withActiveBridge(bridge, async (activeBridge) => {
           const [sx, sy, ex, ey] = input.split("|").map(s => Number(s.trim()));
           if ([sx, sy, ex, ey].some(v => Number.isNaN(v)))
             return "Error: expected `startX|startY|endX|endY` numbers";
-          await activePage.mouse.move(sx, sy);
-          await activePage.mouse.down();
-          await activePage.mouse.move(ex, ey);
-          await activePage.mouse.up();
+          await activeBridge.dragMouse({ x: sx, y: sy }, { x: ex, y: ey });
           return `Dragged (${sx},${sy}) → (${ex},${ey})`;
         });
       } catch (err) {

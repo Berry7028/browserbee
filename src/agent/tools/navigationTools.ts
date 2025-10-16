@@ -1,23 +1,24 @@
 import { DynamicTool } from "langchain/tools";
-import type { Page } from "playwright-crx";
+import type { TabBridge } from "../../bridge";
+import { NavigationStrategy } from "../../bridge";
 import { ToolFactory } from "./types";
-import { withActivePage, getCurrentTabId } from "./utils";
+import { withActiveBridge, getCurrentTabId } from "./utils";
 
-export const browserNavigate: ToolFactory = (page: Page) =>
+export const browserNavigate: ToolFactory = (bridge: TabBridge) =>
   new DynamicTool({
     name: "browser_navigate",
     description:
       "Navigate the browser to a specific URL. Input must be a full URL, e.g. https://example.com",
     func: async (url: string) => {
       try {
-        return await withActivePage(page, async (activePage) => {
+        return await withActiveBridge(bridge, async (activeBridge) => {
           // Navigate to the URL
-          await activePage.goto(url);
+          await activeBridge.navigate(url);
           
           // Get the tab ID and title after navigation
           try {
-            const tabId = await getCurrentTabId(activePage);
-            const newTitle = await activePage.title();
+            const tabId = await getCurrentTabId(activeBridge);
+            const newTitle = await activeBridge.getTitle();
             
             // Send a message to update the UI with the new tab title
             if (tabId) {
@@ -49,7 +50,7 @@ export const browserNavigate: ToolFactory = (page: Page) =>
     },
   });
 
-export const browserWaitForNavigation: ToolFactory = (page: Page) =>
+export const browserWaitForNavigation: ToolFactory = (bridge: TabBridge) =>
   new DynamicTool({
     name: "browser_wait_for_navigation",
     description: 
@@ -60,33 +61,25 @@ export const browserWaitForNavigation: ToolFactory = (page: Page) =>
       "  • all - try multiple strategies in sequence with shorter timeouts (recommended)",
     func: async (strategy: string = "all") => {
       try {
-        return await withActivePage(page, async (activePage) => {
-          switch (strategy.toLowerCase()) {
+        return await withActiveBridge(bridge, async (activeBridge) => {
+          const requested = (strategy || "all").toLowerCase();
+          const normalized: NavigationStrategy =
+            requested === "load" ||
+            requested === "domcontentloaded" ||
+            requested === "networkidle"
+              ? (requested as NavigationStrategy)
+              : "all";
+          await activeBridge.waitForNavigation(normalized);
+          switch (normalized) {
             case "load":
-              await activePage.waitForLoadState("load", { timeout: 10000 });
               return "Navigation complete (DOM loaded).";
             case "domcontentloaded":
-              await activePage.waitForLoadState("domcontentloaded", { timeout: 10000 });
               return "Navigation complete (DOM content loaded).";
             case "networkidle":
-              await activePage.waitForLoadState("networkidle", { timeout: 10000 });
               return "Navigation complete (network idle).";
             case "all":
             default:
-              // Try multiple strategies in sequence with shorter timeouts
-              try {
-                await activePage.waitForLoadState("load", { timeout: 5000 });
-                try {
-                  await activePage.waitForLoadState("networkidle", { timeout: 5000 });
-                } catch (networkError) {
-                  // Ignore network idle errors
-                }
-                return "Navigation complete.";
-              } catch (loadError) {
-                // If load fails, try domcontentloaded
-                await activePage.waitForLoadState("domcontentloaded", { timeout: 5000 });
-                return "Navigation partially complete (DOM content loaded).";
-              }
+              return "Navigation complete.";
           }
         });
       } catch (error) {
@@ -97,14 +90,14 @@ export const browserWaitForNavigation: ToolFactory = (page: Page) =>
     },
   });
 
-export const browserNavigateBack: ToolFactory = (page: Page) =>
+export const browserNavigateBack: ToolFactory = (bridge: TabBridge) =>
   new DynamicTool({
     name: "browser_navigate_back",
     description: "Go back to the previous page (history.back()). No input.",
     func: async () => {
       try {
-        return await withActivePage(page, async (activePage) => {
-          await activePage.goBack();
+        return await withActiveBridge(bridge, async (activeBridge) => {
+          await activeBridge.goBack();
           return "Navigated back.";
         });
       } catch (err) {
@@ -115,14 +108,14 @@ export const browserNavigateBack: ToolFactory = (page: Page) =>
     },
   });
 
-export const browserNavigateForward: ToolFactory = (page: Page) =>
+export const browserNavigateForward: ToolFactory = (bridge: TabBridge) =>
   new DynamicTool({
     name: "browser_navigate_forward",
     description: "Go forward to the next page (history.forward()). No input.",
     func: async () => {
       try {
-        return await withActivePage(page, async (activePage) => {
-          await activePage.goForward();
+        return await withActiveBridge(bridge, async (activeBridge) => {
+          await activeBridge.goForward();
           return "Navigated forward.";
         });
       } catch (err) {

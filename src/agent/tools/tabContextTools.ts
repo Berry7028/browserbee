@@ -1,55 +1,56 @@
 import { DynamicTool } from "langchain/tools";
-import type { Page } from "playwright-crx";
-import { getCurrentPage } from "../PageContextManager";
+import type { TabBridge } from "../../bridge";
 import { ToolFactory } from "./types";
-import { getCurrentTabId } from "./utils";
+import { getCurrentTabId, withActiveBridge } from "./utils";
 
-/**
- * Tool to get information about the currently active tab
- */
-export const browserGetActiveTab: ToolFactory = (page: Page) =>
+export const browserGetActiveTab: ToolFactory = (bridge: TabBridge) =>
   new DynamicTool({
     name: "browser_get_active_tab",
-    description: "Returns information about the currently active tab, including its index, URL, and title.",
+    description:
+      "Returns information about the currently active tab, including its index, URL, and title.",
     func: async () => {
       try {
-        // Get the current active page from the PageContextManager
-        const activePage = getCurrentPage(page);
-        
-        // Get all pages in the context
-        const pages = activePage.context().pages();
-        
-        // Find the index of the current page
-        const activeIndex = pages.indexOf(activePage);
-        
-        // Get the URL and title of the current page
-        const url = activePage.url();
-        const title = await activePage.title();
-        
-        // Get the tab ID for the active page
-        try {
-          const tabId = await getCurrentTabId(activePage);
-          
-          // Send a message to update the UI with the active tab title
-          if (tabId) {
+        return await withActiveBridge(bridge, async (activeBridge) => {
+          const [tabs, tabIdPromise, urlPromise, titlePromise] = await Promise.all([
+            chrome.tabs.query({ currentWindow: true }),
+            getCurrentTabId(activeBridge),
+            activeBridge.getUrl(),
+            activeBridge.getTitle(),
+          ]);
+
+          const tabId = tabIdPromise ?? null;
+          const fallbackUrl = await urlPromise;
+          const fallbackTitle = await titlePromise;
+
+          const activeTab = tabId
+            ? tabs.find((tab) => tab.id === tabId)
+            : tabs.find((tab) => tab.active);
+          const activeIndex = activeTab ? tabs.indexOf(activeTab) : -1;
+          const url = activeTab?.url ?? fallbackUrl;
+          const title = activeTab?.title ?? fallbackTitle;
+
+          if (tabId && title) {
             chrome.runtime.sendMessage({
-              action: 'tabTitleChanged',
-              tabId: tabId,
-              title: title
+              action: "tabTitleChanged",
+              tabId,
+              title,
             });
-            console.log(`Sent tabTitleChanged message for active tab ${tabId} with title "${title}"`);
+            console.log(
+              `Sent tabTitleChanged message for active tab ${tabId} with title "${title}"`,
+            );
           }
-        } catch (error) {
-          console.error("Error updating UI with active tab info:", error);
-        }
-        
-        // Return a JSON object with the information
-        return JSON.stringify({
-          activeTabIndex: activeIndex,
-          url: url,
-          title: title,
-          totalTabs: pages.length
-        }, null, 2);
+
+          return JSON.stringify(
+            {
+              activeTabIndex: activeIndex,
+              url,
+              title,
+              totalTabs: tabs.length,
+            },
+            null,
+            2,
+          );
+        });
       } catch (err) {
         return `Error getting active tab: ${
           err instanceof Error ? err.message : String(err)
@@ -58,157 +59,129 @@ export const browserGetActiveTab: ToolFactory = (page: Page) =>
     },
   });
 
-/**
- * Tool to navigate a specific tab to a URL
- */
-export const browserNavigateTab: ToolFactory = (page: Page) =>
+export const browserNavigateTab: ToolFactory = (bridge: TabBridge) =>
   new DynamicTool({
     name: "browser_navigate_tab",
-    description: "Navigate a specific tab to a URL. Input format: 'tabIndex|url' (e.g., '1|https://example.com')",
+    description:
+      "Navigate a specific tab to a URL. Input format: 'tabIndex|url' (e.g., '1|https://example.com')",
     func: async (input: string) => {
       try {
-        // Split the input into tab index and URL
-        const parts = input.split('|');
+        const parts = input.split("|");
         if (parts.length !== 2) {
           return "Error: Input must be in the format 'tabIndex|url'";
         }
-        
-        const indexStr = parts[0].trim();
+
+        const index = Number(parts[0].trim());
         const url = parts[1].trim();
-        
-        // Parse the tab index
-        const idx = Number(indexStr);
-        if (Number.isNaN(idx)) {
+
+        if (Number.isNaN(index)) {
           return "Error: Tab index must be a number";
         }
-        
-        // Get the current active page from the PageContextManager
-        const activePage = getCurrentPage(page);
-        
-        // Get all pages in the context
-        const pages = activePage.context().pages();
-        
-        // Check if the index is valid
-        if (idx < 0 || idx >= pages.length) {
-          return `Error: Tab index ${idx} out of range (0‑${pages.length - 1})`;
+
+        const tabs = await chrome.tabs.query({ currentWindow: true });
+        if (index < 0 || index >= tabs.length) {
+          return `Error: Tab index ${index} out of range (0-${tabs.length - 1})`;
         }
-        
-        // Navigate the specified tab to the URL
-        await pages[idx].goto(url);
-        
-        // Get the tab ID and new title
+
+        const target = tabs[index];
+        if (!target.id) {
+          return "Error: Target tab is missing an ID.";
+        }
+
+        await chrome.tabs.update(target.id, { url });
+
         try {
-          const tabId = await getCurrentTabId(pages[idx]);
-          const newTitle = await pages[idx].title();
-          
-          // Send a message to update the UI if this is the active tab
-          if (tabId && pages[idx] === getCurrentPage(page)) {
-            chrome.runtime.sendMessage({
-              action: 'tabTitleChanged',
-              tabId: tabId,
-              title: newTitle
-            });
-            console.log(`Sent tabTitleChanged message for tab ${tabId} after navigation to ${url}`);
-          }
-          
-          // Also send a targetChanged message
-          if (tabId) {
-            chrome.runtime.sendMessage({
-              action: 'targetChanged',
-              tabId: tabId,
-              url: url
-            });
-          }
-        } catch (error) {
-          console.error("Error updating UI after tab navigation:", error);
+          const updated = await chrome.tabs.get(target.id);
+          const newTitle = updated.title ?? url;
+          chrome.runtime.sendMessage({
+            action: "tabTitleChanged",
+            tabId: target.id,
+            title: newTitle,
+          });
+          chrome.runtime.sendMessage({
+            action: "targetChanged",
+            tabId: target.id,
+            url,
+          });
+          console.log(
+            `Sent tabTitleChanged and targetChanged messages for tab ${target.id} after navigation to ${url}`,
+          );
+        } catch (messageError) {
+          console.error("Error updating UI after tab navigation:", messageError);
         }
-        
-        return `Successfully navigated tab ${idx} to ${url}`;
+
+        return `Successfully navigated tab ${index} to ${url}`;
       } catch (error) {
-        return `Error: ${
-          error instanceof Error ? error.message : String(error)
-        }`;
+        return `Error: ${error instanceof Error ? error.message : String(error)}`;
       }
     },
   });
 
-/**
- * Tool to take a screenshot of a specific tab
- */
-export const browserScreenshotTab: ToolFactory = (page: Page) =>
+export const browserScreenshotTab: ToolFactory = (_bridge: TabBridge) =>
   new DynamicTool({
     name: "browser_screenshot_tab",
-    description: "Take a screenshot of a specific tab by index. Input format: 'tabIndex[,flags]' (e.g., '1,full')",
+    description:
+      "Take a screenshot of a specific tab by index. Input format: 'tabIndex[,flags]' (e.g., '1,full')",
     func: async (input: string) => {
       try {
-        // Split the input into tab index and flags
-        const parts = input.split(',');
+        const parts = input.split(",");
         const tabIndexStr = parts[0].trim();
-        const flags = parts.slice(1).map(f => f.trim());
-        
-        // Parse the tab index
-        const tabIndex = parseInt(tabIndexStr, 10);
-        if (isNaN(tabIndex)) {
+        const flags = parts.slice(1).map((f) => f.trim().toLowerCase());
+
+        const index = Number(tabIndexStr);
+        if (Number.isNaN(index)) {
           return "Error: First parameter must be a tab index number";
         }
-        
-        // Get the current active page from the PageContextManager
-        const activePage = getCurrentPage(page);
-        
-        // Get all pages in the context
-        const pages = activePage.context().pages();
-        
-        // Check if the index is valid
-        if (tabIndex < 0 || tabIndex >= pages.length) {
-          return `Error: Tab index ${tabIndex} out of range (0-${pages.length - 1})`;
+
+        const tabs = await chrome.tabs.query({ currentWindow: true });
+        if (index < 0 || index >= tabs.length) {
+          return `Error: Tab index ${index} out of range (0-${tabs.length - 1})`;
         }
-        
-        // Get the target page
-        const targetPage = pages[tabIndex];
-        
-        // Set screenshot options based on flags
-        const fullPage = flags.includes("full");
-        const quality = 40; // Default quality
-        
-        // Import ScreenshotManager
+
+        const target = tabs[index];
+        if (!target.id) {
+          return "Error: Target tab is missing an ID.";
+        }
+
+        if (!target.active) {
+          return "Error: Target tab must be active. Use browser_tab_select before taking a screenshot.";
+        }
+
+        if (flags.includes("full")) {
+          console.warn("browser_screenshot_tab: 'full' flag is not yet supported; capturing visible area only.");
+        }
+
+        const windowId = target.windowId ?? chrome.windows.WINDOW_ID_CURRENT;
+        const dataUrl = await chrome.tabs.captureVisibleTab(windowId, {
+          format: "jpeg",
+          quality: 70,
+        });
+
+        if (!dataUrl) {
+          return "Error: Failed to capture screenshot.";
+        }
+
+        const base64 = dataUrl.replace(/^data:image\/(png|jpeg);base64,/i, "");
+
         const { ScreenshotManager } = await import("../../tracking/screenshotManager");
         const screenshotManager = ScreenshotManager.getInstance();
-        
-        // Take the screenshot
-        const buffer = await targetPage.screenshot({ 
-          type: "jpeg", 
-          fullPage, 
-          quality 
-        });
-        
-        // Convert to base64
-        const base64 = buffer.toString("base64");
-        
-        // Create the screenshot data object
-        const screenshotData = {
+        const screenshotId = screenshotManager.storeScreenshot({
           type: "image",
           source: {
             type: "base64",
             media_type: "image/jpeg",
-            data: base64
-          }
-        };
-        
-        // Store the screenshot in the ScreenshotManager
-        const screenshotId = screenshotManager.storeScreenshot(screenshotData);
-        
-        // Log the screenshot storage
-        console.log(`Stored tab screenshot as ${screenshotId} (saved ${base64.length} characters)`);
-        
-        // Return a reference to the screenshot instead of the full data
+            data: base64,
+          },
+        });
+
         return JSON.stringify({
           type: "screenshotRef",
           id: screenshotId,
-          note: `Screenshot captured of tab ${tabIndex} (${fullPage ? 'full page' : 'viewport only'})`
+          note: "Screenshot captured (visible area)",
         });
-      } catch (err) {
-        return `Error taking screenshot: ${
-          err instanceof Error ? err.message : String(err)
+      } catch (error) {
+        return `Error taking tab screenshot: ${
+          error instanceof Error ? error.message : String(error)
         }`;
       }
     },

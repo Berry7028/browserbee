@@ -1,9 +1,9 @@
-import type { Page } from "playwright-crx";
 import { logWithTimestamp } from '../../background/utils';
 import { normalizeDomain } from '../../tracking/domainUtils';
 import { MemoryService, AgentMemory } from '../../tracking/memoryService';
+import type { TabBridge } from '../../bridge';
 
-export function saveMemory(page: Page) {
+export function saveMemory(_bridge: TabBridge) {
   return {
     name: "save_memory",
     description: "Save a memory of how to accomplish a specific task on a website. Use this when you want to remember a useful sequence of actions for future reference.",
@@ -43,7 +43,7 @@ export function saveMemory(page: Page) {
   };
 }
 
-export function lookupMemories(page: Page) {
+export function lookupMemories(_bridge: TabBridge) {
   return {
     name: "lookup_memories",
     description: "Look up stored memories for a specific website domain. Use this as your FIRST step when starting a task on a website to check if there are any saved patterns you can reuse. Always call this with the current domain (e.g., 'www.google.com').",
@@ -86,7 +86,7 @@ export function lookupMemories(page: Page) {
   };
 }
 
-export function getAllMemories(page: Page) {
+export function getAllMemories(_bridge: TabBridge) {
   return {
     name: "get_all_memories",
     description: "Retrieve all stored memories across all domains. Use this when you want to see all available memories.",
@@ -108,7 +108,7 @@ export function getAllMemories(page: Page) {
   };
 }
 
-export function deleteMemory(page: Page) {
+export function deleteMemory(_bridge: TabBridge) {
   return {
     name: "delete_memory",
     description: "Delete a specific memory by its ID. Use this when a memory is no longer useful or accurate.",
@@ -132,7 +132,7 @@ export function deleteMemory(page: Page) {
   };
 }
 
-export function clearAllMemories(page: Page) {
+export function clearAllMemories(_bridge: TabBridge) {
   return {
     name: "clear_all_memories",
     description: "Clear all stored memories. Use this with caution as it will delete all memories across all domains.",

@@ -7,11 +7,7 @@ import tailwindcss from '@tailwindcss/vite';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  optimizeDeps: {
-    exclude: ['playwright-crx']
-  },
   build: {
-    // playwright-crx cannot be obfuscated
     minify: false,
     sourcemap: true,
     outDir: 'dist',
@@ -23,6 +19,7 @@ export default defineConfig({
         'background': path.resolve(__dirname, 'src/background.ts'),
         'sidepanel': path.resolve(__dirname, 'src/sidepanel/index.tsx'),
         'options': path.resolve(__dirname, 'src/options/index.tsx'),
+        'contentScript': path.resolve(__dirname, 'src/contentScript/index.ts'),
       },
       output: {
         entryFileNames: '[name].js',

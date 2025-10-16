@@ -1,4 +1,4 @@
-import type { Page } from "playwright-crx";
+import type { TabBridge } from "../bridge";
 import { BrowserTool, ToolExecutionContext } from "./tools/types";
 
 /**
@@ -6,14 +6,14 @@ import { BrowserTool, ToolExecutionContext } from "./tools/types";
  * tab tool handling, and tool execution context.
  */
 export class ToolManager {
-  private page: Page;
+  private bridge: TabBridge;
   private tools: BrowserTool[] = [];
   
   // Flag to indicate if we should use tab tools exclusively
   private useTabToolsOnly: boolean = false;
   
-  constructor(page: Page, tools: BrowserTool[]) {
-    this.page = page;
+  constructor(bridge: TabBridge, tools: BrowserTool[]) {
+    this.bridge = bridge;
     
     // Wrap non-tab tools with health check
     this.tools = tools.map(tool => {
@@ -43,11 +43,11 @@ export class ToolManager {
    * Check if the connection to the page is still healthy
    */
   async isConnectionHealthy(): Promise<boolean> {
-    if (!this.page) return false;
+    if (!this.bridge) return false;
     
     try {
       // Try a simple operation that would fail if the connection is broken
-      await this.page.evaluate(() => true);
+      await this.bridge.getTitle();
       this.useTabToolsOnly = false; // Connection is healthy, use all tools
       return true;
     } catch (error) {

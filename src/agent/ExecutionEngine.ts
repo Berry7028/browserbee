@@ -16,6 +16,8 @@ const MAX_OUTPUT_TOKENS = 1024;  // max tokens for LLM response
  */
 export interface ExecutionCallbacks {
   onLlmChunk?: (s: string) => void;
+  onReasoningChunk?: (s: string) => void;
+  onReasoningComplete?: (s: string) => void;
   onLlmOutput: (s: string) => void;
   onToolOutput: (s: string) => void;
   onComplete: () => void;
@@ -42,6 +44,8 @@ class CallbackAdapter {
   get adaptedCallbacks(): ExecutionCallbacks {
     return {
       onLlmChunk: this.handleLlmChunk.bind(this),
+      onReasoningChunk: this.originalCallbacks.onReasoningChunk,
+      onReasoningComplete: this.originalCallbacks.onReasoningComplete,
       onLlmOutput: this.originalCallbacks.onLlmOutput,
       onToolOutput: this.originalCallbacks.onToolOutput,
       onComplete: this.handleComplete.bind(this),
@@ -218,10 +222,11 @@ export class ExecutionEngine {
   private async processLlmStream(
     messages: any[],
     adaptedCallbacks: ExecutionCallbacks
-  ): Promise<{ accumulatedText: string, toolCallDetected: boolean }> {
+  ): Promise<{ accumulatedText: string, toolCallDetected: boolean, reasoningText: string }> {
     let accumulatedText = "";
     let streamBuffer = "";
     let toolCallDetected = false;
+    let reasoningBuffer = "";
 
     // Get tools from the ToolManager
     const tools = this.toolManager.getTools();
@@ -246,6 +251,14 @@ export class ExecutionEngine {
         const result = this.trackTokenUsage(chunk, inputTokens, outputTokens, tokenTracker);
         inputTokens = result.updatedInputTokens;
         outputTokens = result.updatedOutputTokens;
+      }
+
+      if (chunk.type === 'reasoning' && chunk.reasoning) {
+        reasoningBuffer += chunk.reasoning;
+        if (adaptedCallbacks.onReasoningChunk) {
+          adaptedCallbacks.onReasoningChunk(chunk.reasoning);
+        }
+        continue;
       }
 
       // Handle text chunks
@@ -310,8 +323,11 @@ export class ExecutionEngine {
     console.log("Decoded HTML entities in accumulated text");
 
     adaptedCallbacks.onLlmOutput(accumulatedText);
+    if (adaptedCallbacks.onReasoningComplete) {
+      adaptedCallbacks.onReasoningComplete(reasoningBuffer);
+    }
 
-    return { accumulatedText, toolCallDetected };
+    return { accumulatedText, toolCallDetected, reasoningText: reasoningBuffer };
   }
 
   /**

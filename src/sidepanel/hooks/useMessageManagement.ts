@@ -70,6 +70,19 @@ export const useMessageManagement = () => {
     setStreamingSegments({});
   };
 
+  const attachReasoningToLastMessage = (reasoning: string) => {
+    setMessages(prev => {
+      const updated = [...prev];
+      for (let i = updated.length - 1; i >= 0; i--) {
+        if (updated[i].type === 'llm') {
+          updated[i] = { ...updated[i], reasoning };
+          break;
+        }
+      }
+      return updated;
+    });
+  };
+
   return {
     messages,
     streamingSegments,
@@ -85,6 +98,7 @@ export const useMessageManagement = () => {
     startNewSegment,
     completeStreaming,
     clearMessages,
-    currentSegmentId
+    currentSegmentId,
+    attachReasoningToLastMessage
   };
 };
