@@ -1,4 +1,4 @@
-import type { Page } from "playwright-crx";
+import type { TabBridge } from "../bridge";
 
 /**
  * PageContextManager is responsible for tracking the currently active page.
@@ -6,7 +6,7 @@ import type { Page } from "playwright-crx";
  */
 export class PageContextManager {
   private static instance: PageContextManager;
-  private currentPage: Page | null = null;
+  private currentBridge: TabBridge | null = null;
 
   private constructor() {
     // Private constructor to enforce singleton pattern
@@ -26,9 +26,9 @@ export class PageContextManager {
    * Set the current active page
    * @param page The page to set as active
    */
-  public setCurrentPage(page: Page): void {
-    this.currentPage = page;
-    console.log("PageContextManager: Active page updated");
+  public setCurrentBridge(bridge: TabBridge): void {
+    this.currentBridge = bridge;
+    console.log("PageContextManager: Active bridge updated");
   }
 
   /**
@@ -36,18 +36,18 @@ export class PageContextManager {
    * @param fallbackPage Fallback page to use if no current page is set
    * @returns The current active page or the fallback page
    */
-  public getCurrentPage(fallbackPage: Page): Page {
-    return this.currentPage || fallbackPage;
+  public getCurrentBridge(fallbackBridge: TabBridge): TabBridge {
+    return this.currentBridge || fallbackBridge;
   }
 
   /**
    * Initialize the PageContextManager with an initial page
    * @param initialPage The initial page to set
    */
-  public initialize(initialPage: Page): void {
-    if (!this.currentPage) {
-      this.currentPage = initialPage;
-      console.log("PageContextManager: Initialized with initial page");
+  public initialize(initialBridge: TabBridge): void {
+    if (!this.currentBridge) {
+      this.currentBridge = initialBridge;
+      console.log("PageContextManager: Initialized with initial bridge");
     }
   }
 
@@ -55,7 +55,7 @@ export class PageContextManager {
    * Reset the PageContextManager
    */
   public reset(): void {
-    this.currentPage = null;
+    this.currentBridge = null;
     console.log("PageContextManager: Reset");
   }
 }
@@ -65,24 +65,24 @@ export class PageContextManager {
  * @param fallbackPage Fallback page to use if no current page is set
  * @returns The current active page or the fallback page
  */
-export function getCurrentPage(fallbackPage: Page): Page {
-  return PageContextManager.getInstance().getCurrentPage(fallbackPage);
+export function getCurrentBridge(fallbackBridge: TabBridge): TabBridge {
+  return PageContextManager.getInstance().getCurrentBridge(fallbackBridge);
 }
 
 /**
  * Helper function to set the current active page
  * @param page The page to set as active
  */
-export function setCurrentPage(page: Page): void {
-  PageContextManager.getInstance().setCurrentPage(page);
+export function setCurrentBridge(bridge: TabBridge): void {
+  PageContextManager.getInstance().setCurrentBridge(bridge);
 }
 
 /**
  * Helper function to initialize the PageContextManager
  * @param initialPage The initial page to set
  */
-export function initializePageContext(initialPage: Page): void {
-  PageContextManager.getInstance().initialize(initialPage);
+export function initializePageContext(initialBridge: TabBridge): void {
+  PageContextManager.getInstance().initialize(initialBridge);
 }
 
 /**
@@ -90,4 +90,20 @@ export function initializePageContext(initialPage: Page): void {
  */
 export function resetPageContext(): void {
   PageContextManager.getInstance().reset();
+}
+
+/**
+ * Backwards compatible helper returning the current bridge. Will be removed once all call sites migrate.
+ * @deprecated Use getCurrentBridge instead.
+ */
+export function getCurrentPage(fallbackBridge: TabBridge): TabBridge {
+  return getCurrentBridge(fallbackBridge);
+}
+
+/**
+ * Backwards compatible helper alias for setCurrentBridge.
+ * @deprecated Use setCurrentBridge instead.
+ */
+export function setCurrentPage(bridge: TabBridge): void {
+  setCurrentBridge(bridge);
 }

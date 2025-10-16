@@ -1,5 +1,5 @@
 import { DynamicTool } from "langchain/tools";
-import type { Page, BrowserContext, Dialog } from "playwright-crx/test";
+import type { TabBridge } from "../../bridge";
 
 export interface BrowserTool {
   name: string;
@@ -12,4 +12,4 @@ export interface ToolExecutionContext {
   approvalReason?: string; // Reason why approval was required
 }
 
-export type ToolFactory = (page: Page) => DynamicTool;
+export type ToolFactory = (bridge: TabBridge) => DynamicTool;

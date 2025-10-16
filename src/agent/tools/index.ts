@@ -1,4 +1,4 @@
-import type { Page } from "playwright-crx";
+import type { TabBridge } from "../../bridge";
 
 // Import all tools from their respective modules
 import { 
@@ -38,16 +38,7 @@ import {
   browserReadText, 
   browserScreenshot 
 } from "./observationTools";
-import {
-  browserGetActiveTab,
-  browserNavigateTab,
-  browserScreenshotTab
-} from "./tabContextTools";
-
-
-
-
-
+import { browserGetActiveTab, browserNavigateTab, browserScreenshotTab } from "./tabContextTools";
 import { 
   browserTabList, 
   browserTabNew, 
@@ -106,53 +97,53 @@ export {
 };
 
 // Function to get all tools as an array
-export function getAllTools(page: Page) {
+export function getAllTools(bridge: TabBridge) {
   const tools = [
     // Navigation tools
-    browserNavigate(page),
-    browserWaitForNavigation(page),
-    browserNavigateBack(page),
-    browserNavigateForward(page),
+    browserNavigate(bridge),
+    browserWaitForNavigation(bridge),
+    browserNavigateBack(bridge),
+    browserNavigateForward(bridge),
     
     // Tab context tools
-    browserGetActiveTab(page),
-    browserNavigateTab(page),
-    browserScreenshotTab(page),
+    browserGetActiveTab(bridge),
+    browserNavigateTab(bridge),
+    browserScreenshotTab(bridge),
     
     // Interaction tools
-    browserClick(page),
-    browserType(page),
-    browserHandleDialog(page),
+    browserClick(bridge),
+    browserType(bridge),
+    browserHandleDialog(bridge),
     
     // Observation tools
-    browserGetTitle(page),
-    browserSnapshotDom(page),
-    browserQuery(page),
-    browserAccessibleTree(page),
-    browserReadText(page),
-    browserScreenshot(page),
+    browserGetTitle(bridge),
+    browserSnapshotDom(bridge),
+    browserQuery(bridge),
+    browserAccessibleTree(bridge),
+    browserReadText(bridge),
+    browserScreenshot(bridge),
     
     // Mouse tools
-    browserMoveMouse(page),
-    browserClickXY(page),
-    browserDrag(page),
+    browserMoveMouse(bridge),
+    browserClickXY(bridge),
+    browserDrag(bridge),
     
     // Keyboard tools
-    browserPressKey(page),
-    browserKeyboardType(page),
+    browserPressKey(bridge),
+    browserKeyboardType(bridge),
     
     // Tab tools
-    browserTabList(page),
-    browserTabNew(page),
-    browserTabSelect(page),
-    browserTabClose(page),
+    browserTabList(bridge),
+    browserTabNew(bridge),
+    browserTabSelect(bridge),
+    browserTabClose(bridge),
     
     // Memory tools
-    saveMemory(page),
-    lookupMemories(page),
-    getAllMemories(page),
-    deleteMemory(page),
-    clearAllMemories(page)
+    saveMemory(bridge),
+    lookupMemories(bridge),
+    getAllMemories(bridge),
+    deleteMemory(bridge),
+    clearAllMemories(bridge)
   ];
   
   return tools;

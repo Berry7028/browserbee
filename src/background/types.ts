@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { BrowserAgent } from "../agent/AgentCore";
+import type { TabBridge } from "../bridge";
 
 // Provider types
 export type ProviderType = 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'openai-compatible';
@@ -286,6 +287,20 @@ export interface PageErrorMessage {
   error: string;
 }
 
+export interface ToolStatusUpdateMessage {
+  action: 'toolStatusUpdate';
+  content: {
+    status: 'running' | 'completed' | 'failed';
+    toolName: string;
+    toolInput?: string;
+    startedAt?: number;
+    endedAt?: number;
+    message?: string;
+  };
+  tabId?: number;
+  windowId?: number;
+}
+
 export type UIMessage =
   | UpdateOutputMessage
   | UpdateStreamingChunkMessage
@@ -307,11 +322,12 @@ export type UIMessage =
   | PageDialogMessage
   | PageConsoleMessage
   | PageErrorMessage
+  | ToolStatusUpdateMessage
   | AgentStatusUpdateMessage;
 
 // State types
 export interface TabState {
-  page: any;
+  bridge: TabBridge | null;
   windowId?: number;
   title?: string;
 }

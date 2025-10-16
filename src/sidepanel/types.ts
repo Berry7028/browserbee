@@ -12,6 +12,7 @@ export interface Message {
   timestamp?: number; // Add timestamp for chat history
   toolName?: string; // Tool name for tool messages
   toolInput?: string; // Tool input for tool messages
+  reasoning?: string; // Optional reasoning trace for reasoning models
 }
 
 // Chrome message types
@@ -39,4 +40,6 @@ export interface ChromeMessage {
   // Tab replacement properties
   oldTabId?: number;
   newTabId?: number;
+
+  // Tool status updates (payload carried in content)
 }

@@ -366,7 +366,7 @@ export async function addToConversationHistory(tabId: number, message: Anthropic
 export async function initializeAgent(tabId: number, forceReinit: boolean = false): Promise<boolean> {
   const tabState = getTabState(tabId);
   
-  if (!tabState?.page || !tabState.windowId) {
+  if (!tabState?.bridge || !tabState.windowId) {
     return false;
   }
   
@@ -390,7 +390,7 @@ export async function initializeAgent(tabId: number, forceReinit: boolean = fals
       // Make API key optional for Ollama
       if (providerConfig.apiKey || providerConfig.provider === 'ollama') {
         logWithTimestamp(`Creating LLM agent for window ${windowId} with ${providerConfig.provider} provider...`);
-        const agent = await createBrowserAgent(tabState.page, providerConfig.apiKey || 'dummy-key-for-ollama');
+        const agent = await createBrowserAgent(tabState.bridge, providerConfig.apiKey || 'dummy-key-for-ollama');
         
         // Store the agent by window ID
         setAgentForWindow(windowId, agent);
@@ -499,8 +499,8 @@ export async function executePrompt(prompt: string, tabId?: number, isReflection
     
     // Check if we need to initialize or reattach
     const tabWindowId = tabState?.windowId;
-    const needsInitialization = !tabState?.page || !tabWindowId || !getAgentForWindow(tabWindowId);
-    const connectionBroken = tabState?.page && !(await isConnectionHealthy(tabState.page));
+    const needsInitialization = !tabState?.bridge || !tabWindowId || !getAgentForWindow(tabWindowId);
+    const connectionBroken = tabState?.bridge && !(await isConnectionHealthy(tabState.bridge));
     
     if (needsInitialization || connectionBroken) {
       // If connection is broken, log it
@@ -564,7 +564,7 @@ export async function executePrompt(prompt: string, tabId?: number, isReflection
     const updatedTabState = getTabState(targetTabId);
     
     // If we still don't have a page or window ID, something went wrong
-    if (!updatedTabState?.page || !updatedTabState?.windowId) {
+    if (!updatedTabState?.bridge || !updatedTabState?.windowId) {
       sendUIMessage('updateOutput', {
         type: 'system',
         content: 'Error: Failed to initialize Playwright or create agent. This may be because you are using the extension in an unsupported tab type.'
@@ -575,35 +575,29 @@ export async function executePrompt(prompt: string, tabId?: number, isReflection
     
     // Update PageContextManager with the new page
     try {
-      const { setCurrentPage } = await import('../agent/PageContextManager');
-      setCurrentPage(updatedTabState.page);
-      logWithTimestamp(`Updated PageContextManager with page for tab ${targetTabId} in executePrompt`);
+      const { setCurrentBridge } = await import('../agent/PageContextManager');
+      setCurrentBridge(updatedTabState.bridge);
+      logWithTimestamp(`Updated PageContextManager with bridge for tab ${targetTabId} in executePrompt`);
     } catch (error) {
       logWithTimestamp(`Error updating PageContextManager in executePrompt: ${error instanceof Error ? error.message : String(error)}`, 'warn');
     }
 
-    // Add current page context to history if we have a page
-    if (updatedTabState.page) {
+    // Add current page context to history if we have a bridge
+    if (updatedTabState.bridge) {
       try {
-        const currentUrl = await updatedTabState.page.url();
-        const currentTitle = await updatedTabState.page.title();
-        
-        // Add a more explicit system message about the current page
+        const currentUrl = await updatedTabState.bridge.getUrl();
+        const currentTitle = await updatedTabState.bridge.getTitle();
+
         const pageContextMessage = `Current page: ${currentUrl} (${currentTitle}) - Consider this context when executing commands. If asked to summarize, create tables, or analyze options without specific references, assume the request refers to content on this page.`;
-        
+
         sendUIMessage('updateOutput', {
           type: 'system',
           content: pageContextMessage
         }, targetTabId);
-        
-        // Set the current page context in the PromptManager
-        // This will be included in the system prompt
+
         const updatedWindowId = updatedTabState.windowId;
         const agent = getAgentForWindow(updatedWindowId);
         if (agent) {
-          // Access the PromptManager through the agent
-          // This is a bit of a hack since we don't have direct access to the PromptManager
-          // We're assuming the agent has a property called promptManager
           const promptManager = (agent as any).promptManager;
           if (promptManager && typeof promptManager.setCurrentPageContext === 'function') {
             promptManager.setCurrentPageContext(currentUrl, currentTitle);
@@ -657,6 +651,10 @@ export async function executePrompt(prompt: string, tabId?: number, isReflection
       });
     }
     
+    let reasoningBuffer = "";
+    let pendingReasoning = "";
+    let currentTool: { name: string; input?: string; startedAt: number } | null = null;
+
     // Create callbacks for the agent
     const callbacks: ExecutionCallbacks = {
       onLlmChunk: (chunk) => {
@@ -667,6 +665,12 @@ export async function executePrompt(prompt: string, tabId?: number, isReflection
           // Add chunk to buffer
           addToStreamingBuffer(chunk, targetTabId, windowId);
         }
+      },
+      onReasoningChunk: (chunk) => {
+        reasoningBuffer += chunk;
+      },
+      onReasoningComplete: (full) => {
+        reasoningBuffer = full;
       },
       onLlmOutput: async (content) => {
         // For non-streaming mode, send the complete output
@@ -680,21 +684,23 @@ export async function executePrompt(prompt: string, tabId?: number, isReflection
           // This will be used in onComplete if needed
           setStreamingBuffer(content);
         }
-        
+
+        pendingReasoning = reasoningBuffer;
+        reasoningBuffer = '';
+
+        if (!useStreaming && pendingReasoning.trim()) {
+          sendUIMessage('updateReasoning', {
+            reasoning: pendingReasoning
+          }, targetTabId);
+          pendingReasoning = '';
+        }
+
         // If this is a reflection prompt, directly save the memory
-        if (isReflectionPrompt) {
-          // Get the domain from the current page
+        if (isReflectionPrompt && updatedTabState.bridge) {
           try {
-            updatedTabState.page.evaluate(() => window.location.href)
-              .then((url: string) => {
-                const domain = new URL(url).hostname;
-                
-                // Directly save the memory
-                saveReflectionMemory(content, domain, targetTabId);
-              })
-              .catch((error: any) => {
-                logWithTimestamp(`Error getting domain for reflection: ${error instanceof Error ? error.message : String(error)}`, 'error');
-              });
+            const url = await updatedTabState.bridge.getUrl();
+            const domain = new URL(url).hostname;
+            saveReflectionMemory(content, domain, targetTabId);
           } catch (error) {
             logWithTimestamp(`Error in domain extraction for reflection: ${error instanceof Error ? error.message : String(error)}`, 'error');
           }
@@ -754,6 +760,20 @@ export async function executePrompt(prompt: string, tabId?: number, isReflection
         }
       },
       onToolEnd: (result) => {
+        const windowId = getWindowForTab(targetTabId);
+        const finishedAt = Date.now();
+        if (currentTool) {
+          sendUIMessage('toolStatusUpdate', {
+            status: 'completed',
+            toolName: currentTool.name,
+            toolInput: currentTool.input,
+            startedAt: currentTool.startedAt,
+            endedAt: finishedAt,
+            message: result,
+          }, targetTabId, windowId);
+        }
+        currentTool = null;
+
         // Check if this is a screenshot result by trying to parse it as JSON
         try {
           const data = JSON.parse(result);
@@ -788,6 +808,19 @@ export async function executePrompt(prompt: string, tabId?: number, isReflection
         }
       },
       onError: (error) => {
+        if (currentTool) {
+          const windowId = getWindowForTab(targetTabId);
+          sendUIMessage('toolStatusUpdate', {
+            status: 'failed',
+            toolName: currentTool.name,
+            toolInput: currentTool.input,
+            startedAt: currentTool.startedAt,
+            endedAt: Date.now(),
+            message: error instanceof Error ? error.message : String(error),
+          }, targetTabId, windowId);
+          currentTool = null;
+        }
+
         // For retryable errors (rate limit or overloaded), show a message but don't complete processing
         if (error?.error?.type === 'rate_limit_error' || error?.error?.type === 'overloaded_error') {
           const errorType = error?.error?.type === 'overloaded_error' ? 'Anthropic servers overloaded' : 'Rate limit exceeded';
@@ -829,11 +862,18 @@ export async function executePrompt(prompt: string, tabId?: number, isReflection
         }
       },
       onToolStart: (toolName, toolInput) => {
+        const windowId = getWindowForTab(targetTabId);
+        const startedAt = Date.now();
+        currentTool = { name: toolName, input: toolInput, startedAt };
+
+        sendUIMessage('toolStatusUpdate', {
+          status: 'running',
+          toolName,
+          toolInput,
+          startedAt,
+        }, targetTabId, windowId);
+
         if (useStreaming) {
-          // Get the window ID for this tab
-          const windowId = getWindowForTab(targetTabId);
-          
-          // Start a new segment for after the tool execution
           startNewSegment(getCurrentSegmentId(), targetTabId, windowId);
         }
       },
@@ -860,7 +900,14 @@ export async function executePrompt(prompt: string, tabId?: number, isReflection
         if (useStreaming) {
           signalStreamingComplete(targetTabId, windowId);
         }
-        
+
+        if (pendingReasoning.trim()) {
+          sendUIMessage('updateReasoning', {
+            reasoning: pendingReasoning
+          }, targetTabId, windowId);
+          pendingReasoning = '';
+        }
+
         // Set agent status to IDLE
         if (windowId) {
           setAgentStatus(windowId, AgentStatus.IDLE);

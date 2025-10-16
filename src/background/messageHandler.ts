@@ -254,27 +254,68 @@ function handleInitializeTab(
           handleError(titleError, 'getting tab title');
         }
         
-        await attachToTab(message.tabId, message.windowId);
-        await initializeAgent(message.tabId);
-        
-        // Get the tab state to check if attachment was successful
-        const tabState = getTabState(message.tabId);
-        if (tabState) {
-          // Send a message back to the side panel with the tab title
+        const attached = await attachToTab(message.tabId, message.windowId);
+        if (attached !== true) {
           chrome.runtime.sendMessage({
             action: 'updateOutput',
             content: {
               type: 'system',
-              content: `Connected to tab: ${tabState.title || tabTitle}`
+              content: `Error: ${attached && typeof attached === 'object' ? attached.reason : 'Unable to attach to tab.'}`
             },
             tabId: message.tabId,
-            windowId: tabState.windowId
+            windowId: message.windowId
           });
+          sendResponse({ success: false, error: 'attach_failed' });
+          return;
         }
-        
+
+        const tabState = getTabState(message.tabId);
+        if (!tabState) {
+          chrome.runtime.sendMessage({
+            action: 'updateOutput',
+            content: {
+              type: 'system',
+              content: 'Error: Failed to capture tab state after attachment.'
+            },
+            tabId: message.tabId,
+            windowId: message.windowId
+          });
+          sendResponse({ success: false, error: 'tab_state_missing' });
+          return;
+        }
+
+        const agentReady = await initializeAgent(message.tabId);
+        if (!agentReady) {
+          chrome.runtime.sendMessage({
+            action: 'updateOutput',
+            content: {
+              type: 'system',
+              content: 'Error: Could not initialize agent for this tab.'
+            },
+            tabId: message.tabId,
+            windowId: message.windowId
+          });
+          sendResponse({ success: false, error: 'agent_init_failed' });
+          return;
+        }
+
+        // Get the tab state to check if attachment was successful
+        // tabState 取得済み
+        chrome.runtime.sendMessage({
+          action: 'updateOutput',
+          content: {
+            type: 'system',
+            content: `Connected to tab: ${tabState.title || tabTitle}`
+          },
+          tabId: message.tabId,
+          windowId: tabState.windowId
+        });
+
         logWithTimestamp(`Tab ${message.tabId} in window ${message.windowId || 'unknown'} initialized from side panel`);
       } catch (error) {
         handleError(error, 'initializing tab from side panel');
+        sendResponse({ success: false, error: String(error) });
+        return;
       }
     }, 0);
   }

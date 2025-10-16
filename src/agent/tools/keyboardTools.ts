@@ -1,18 +1,18 @@
 import { DynamicTool } from "langchain/tools";
-import type { Page } from "playwright-crx";
+import type { TabBridge } from "../../bridge";
 import { ToolFactory } from "./types";
-import { withActivePage } from "./utils";
+import { withActiveBridge } from "./utils";
 
-export const browserPressKey: ToolFactory = (page: Page) =>
+export const browserPressKey: ToolFactory = (bridge: TabBridge) =>
   new DynamicTool({
     name: "browser_press_key",
     description:
       "Press a single key. Input is the key name (e.g. `Enter`, `ArrowLeft`, `a`).",
     func: async (key: string) => {
       try {
-        return await withActivePage(page, async (activePage) => {
+        return await withActiveBridge(bridge, async (activeBridge) => {
           if (!key.trim()) return "Error: key name required";
-          await activePage.keyboard.press(key.trim());
+          await activeBridge.pressKey(key.trim());
           return `Pressed key: ${key.trim()}`;
         });
       } catch (err) {
@@ -23,15 +23,15 @@ export const browserPressKey: ToolFactory = (page: Page) =>
     },
   });
 
-export const browserKeyboardType: ToolFactory = (page: Page) =>
+export const browserKeyboardType: ToolFactory = (bridge: TabBridge) =>
   new DynamicTool({
     name: "browser_keyboard_type",
     description:
       "Type arbitrary text at the current focus location. Input is the literal text to type. Use `\\n` for new lines.",
     func: async (text: string) => {
       try {
-        return await withActivePage(page, async (activePage) => {
-          await activePage.keyboard.type(text);
+        return await withActiveBridge(bridge, async (activeBridge) => {
+          await activeBridge.typeText(text);
           return `Typed ${text.length} characters`;
         });
       } catch (err) {

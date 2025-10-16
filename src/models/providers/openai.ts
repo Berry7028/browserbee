@@ -135,6 +135,25 @@ export class OpenAIProvider implements LLMProvider {
           };
         }
 
+        // Handle reasoning content from reasoning models
+        const reasoningSegments = (delta as any)?.reasoning_content || (delta as any)?.thoughts;
+        if (Array.isArray(reasoningSegments)) {
+          const reasoningText = reasoningSegments
+            .map((segment: any) => segment?.text || segment?.content || "")
+            .join("");
+          if (reasoningText) {
+            yield {
+              type: "reasoning",
+              reasoning: reasoningText,
+            };
+          }
+        } else if (typeof (delta as any)?.reasoning === "string" && (delta as any).reasoning.trim()) {
+          yield {
+            type: "reasoning",
+            reasoning: (delta as any).reasoning,
+          };
+        }
+
         // Handle tool calls
         if (delta?.tool_calls && delta.tool_calls.length > 0) {
           const toolCall = delta.tool_calls[0];
