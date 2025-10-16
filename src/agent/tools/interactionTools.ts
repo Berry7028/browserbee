@@ -1,7 +1,16 @@
 import { DynamicTool } from "langchain/tools";
-import type { TabBridge } from "../../bridge";
+import type { ElementState, TabBridge } from "../../bridge";
 import { ToolFactory } from "./types";
 import { withActiveBridge } from "./utils";
+
+const describeElementState = (state: ElementState): string => {
+  if (!state.found) return "element not found";
+  const parts: string[] = [];
+  parts.push(state.visible ? "visible" : "not visible");
+  if (state.disabled) parts.push("disabled");
+  if (state.matches && state.matches > 1) parts.push(`${state.matches} matches`);
+  return `${state.description ?? "element"} (${parts.join(", ") || "state unknown"})`;
+};
 
 export const browserClick: ToolFactory = (bridge: TabBridge) =>
   new DynamicTool({
@@ -11,12 +20,34 @@ export const browserClick: ToolFactory = (bridge: TabBridge) =>
     func: async (input: string) => {
       try {
         return await withActiveBridge(bridge, async (activeBridge) => {
-          if (/[#.[]/.test(input)) {
-            await activeBridge.clickSelector(input);
-            return `Clicked selector: ${input}`;
+          const trimmed = input.trim();
+          if (!trimmed) {
+            return "Error: input is empty. Provide a selector or text.";
           }
-          await activeBridge.clickByText(input);
-          return `Clicked element containing text: ${input}`;
+          const isSelector = /[#.[\]]/.test(trimmed) || trimmed.startsWith("//");
+
+          if (isSelector) {
+            const before = await activeBridge.inspectSelector(trimmed);
+            if (!before.found) {
+              return `Error: selector '${trimmed}' could not be located.`;
+            }
+            if (!before.visible) {
+              return `Error: selector '${trimmed}' was found but is not visible (${describeElementState(before)}).`;
+            }
+
+            await activeBridge.clickSelector(trimmed);
+            const after = await activeBridge.inspectSelector(trimmed);
+            return `Located ${describeElementState(before)}. Click executed. Post-check: ${describeElementState(after)}.`;
+          }
+
+          const beforeText = await activeBridge.inspectByText(trimmed, false);
+          if (!beforeText.found) {
+            return `Error: no element containing "${trimmed}" was found.`;
+          }
+
+          await activeBridge.clickByText(trimmed);
+          const afterText = await activeBridge.inspectByText(trimmed, false);
+          return `Located text match ${describeElementState(beforeText)}. Click executed. Post-check: ${describeElementState(afterText)}.`;
         });
       } catch (error) {
         return `Error clicking '${input}': ${
@@ -38,8 +69,24 @@ export const browserType: ToolFactory = (bridge: TabBridge) =>
           if (!selector || !text) {
             return "Error: expected 'selector|text'";
           }
-          await activeBridge.fillSelector(selector, text);
-          return `Typed "${text}" into ${selector}`;
+          const trimmedSelector = selector.trim();
+          const desired = text;
+          const before = await activeBridge.inspectSelector(trimmedSelector);
+          if (!before.found) {
+            return `Error: selector '${trimmedSelector}' could not be located.`;
+          }
+          if (before.disabled) {
+            return `Error: selector '${trimmedSelector}' is disabled and cannot receive input (${describeElementState(before)}).`;
+          }
+
+          await activeBridge.fillSelector(trimmedSelector, desired);
+          const actualValue = await activeBridge.getInputValue(trimmedSelector);
+          const verification = actualValue === desired
+            ? "Verification successful: field value matches input."
+            : `Warning: expected '${desired}' but observed '${actualValue ?? ""}'.`;
+
+          const after = await activeBridge.inspectSelector(trimmedSelector);
+          return `Located ${describeElementState(before)}. Typed "${desired}". ${verification} Post-check: ${describeElementState(after)}.`;
         });
       } catch (error) {
         return `Error typing into '${input}': ${

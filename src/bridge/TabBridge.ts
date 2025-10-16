@@ -62,6 +62,14 @@ export interface DialogHandleResult {
   message: string;
 }
 
+export interface ElementState {
+  found: boolean;
+  visible: boolean;
+  disabled: boolean;
+  description?: string;
+  matches?: number;
+}
+
 export interface TabBridge {
   getTabId(): Promise<number | null>;
   getUrl(): Promise<string>;
@@ -91,6 +99,10 @@ export interface TabBridge {
   resizeImage(options: ResizeImageOptions): Promise<ResizeImageResult>;
   recompressImage(options: RecompressImageOptions): Promise<RecompressImageResult>;
   getViewport(): Promise<{ width: number; height: number; scrollWidth?: number; scrollHeight?: number }>;
+
+  inspectSelector(selector: string): Promise<ElementState>;
+  inspectByText(text: string, exact?: boolean): Promise<ElementState>;
+  getInputValue(selector: string): Promise<string | null>;
 
   getLastDialog(): Promise<DialogInfo | null>;
   handleDialog(action: DialogAction, promptText?: string): Promise<DialogHandleResult>;

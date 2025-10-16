@@ -41,12 +41,5 @@ export interface ChromeMessage {
   oldTabId?: number;
   newTabId?: number;
 
-  toolStatus?: {
-    status: 'running' | 'completed' | 'failed';
-    toolName: string;
-    toolInput?: string;
-    startedAt?: number;
-    endedAt?: number;
-    message?: string;
-  };
+  // Tool status updates (payload carried in content)
 }

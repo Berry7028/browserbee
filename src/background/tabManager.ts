@@ -41,6 +41,7 @@ export function removeAttachedTab(tabId: number): void {
   attachedTabIds.delete(tabId);
   tabStates.delete(tabId);
   tabToWindowMap.delete(tabId);
+  injectedTabs.delete(tabId);
   logWithTimestamp(`Tab ${tabId} detached`);
 }
 
@@ -77,19 +78,26 @@ function isSupportedUrl(url: string | undefined): boolean {
   return true;
 }
 
+const injectedTabs = new Set<number>();
+
 async function injectContentScript(tabId: number): Promise<void> {
+  if (injectedTabs.has(tabId)) {
+    return;
+  }
+
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
       files: ['contentScript.js'],
-      injectImmediately: false,
+      injectImmediately: true,
     });
+    injectedTabs.add(tabId);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (message.includes('Cannot access contents of url')) {
       throw error;
     }
-    // Ignore errors caused by multiple injections
+    logWithTimestamp(`Content script injection warning for tab ${tabId}: ${message}`, 'warn');
   }
 }
 

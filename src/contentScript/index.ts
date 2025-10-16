@@ -10,6 +10,76 @@ if (!window.__browserbeeBridgeInjected__) {
   const MAX_DOM_RETURN_CHARS = 20000;
   const MAX_SCREENSHOT_CHARS = 500000;
 
+  interface ElementState {
+    found: boolean;
+    visible: boolean;
+    disabled: boolean;
+    description?: string;
+    matches?: number;
+  }
+
+  const isElementVisible = (element: Element): boolean => {
+    const style = window.getComputedStyle(element);
+    if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) {
+      return false;
+    }
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  };
+
+  const buildElementDescription = (element: Element): string => {
+    const parts = [element.tagName.toLowerCase()];
+    if (element.id) parts.push(`#${element.id}`);
+    if (element.classList.length) parts.push(`.${Array.from(element.classList).join('.')}`);
+    return parts.join('');
+  };
+
+  function inspectSelector(selector: string): ElementState {
+    const element = document.querySelector<HTMLElement>(selector);
+    if (!element) {
+      return { found: false, visible: false, disabled: false };
+    }
+    const disabled = element.matches(':disabled');
+    return {
+      found: true,
+      visible: isElementVisible(element),
+      disabled,
+      description: buildElementDescription(element),
+    };
+  }
+
+  function inspectByText(text: string, exact?: boolean): ElementState {
+    const needle = text.trim();
+    if (!needle) {
+      return { found: false, visible: false, disabled: false };
+    }
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let matches = 0;
+    let firstMatch: HTMLElement | null = null;
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text;
+      const content = node.textContent?.trim();
+      if (!content) continue;
+      const match = exact ? content === needle : content.includes(needle);
+      if (!match) continue;
+      matches += 1;
+      if (!firstMatch && node.parentElement instanceof HTMLElement) {
+        firstMatch = node.parentElement;
+      }
+    }
+    if (!firstMatch) {
+      return { found: false, visible: false, disabled: false, matches: 0 };
+    }
+    const disabled = firstMatch.matches(':disabled');
+    return {
+      found: true,
+      visible: isElementVisible(firstMatch),
+      disabled,
+      description: buildElementDescription(firstMatch),
+      matches,
+    };
+  }
+
 interface BridgeRequest {
   id: string;
   method: string;
@@ -88,141 +158,154 @@ function installDialogOverrides() {
 installDialogOverrides();
 
   const handlers: Record<string, Handler> = {
-  ping: () => "pong",
-  getTitle: () => document.title,
-  getUrl: () => window.location.href,
-  clickSelector: ({ selector }: { selector: string }) => {
-    const element = document.querySelector<HTMLElement>(selector);
-    if (!element) throw new Error(`Selector not found: ${selector}`);
-    element.click();
-    return true;
-  },
-  clickByText: ({ text, exact }: { text: string; exact?: boolean }) => {
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    const needle = text.trim();
-    while (walker.nextNode()) {
-      const node = walker.currentNode as Text;
-      const content = node.textContent?.trim() || "";
-      if (!content) continue;
-      const match = exact ? content === needle : content.includes(needle);
-      if (match) {
-        const element = node.parentElement as HTMLElement | null;
-        if (element) {
-          element.click();
+    ping: () => "pong",
+    getTitle: () => document.title,
+    getUrl: () => window.location.href,
+    inspectSelector: ({ selector }: { selector: string }) => inspectSelector(selector),
+    inspectByText: ({ text, exact }: { text: string; exact?: boolean }) => inspectByText(text, exact),
+    getInputValue: ({ selector }: { selector: string }) => {
+      const element = document.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(selector);
+      if (!element) return null;
+      if (element instanceof HTMLSelectElement) {
+        return element.value;
+      }
+      if ('value' in element) {
+        return (element as HTMLInputElement | HTMLTextAreaElement).value;
+      }
+      if ((element as HTMLElement).isContentEditable) {
+        return (element as HTMLElement).innerText;
+      }
+      return null;
+    },
+    clickSelector: ({ selector }: { selector: string }) => {
+      const element = document.querySelector<HTMLElement>(selector);
+      if (!element) throw new Error(`Selector not found: ${selector}`);
+      element.click();
+      return true;
+    },
+    clickByText: ({ text, exact }: { text: string; exact?: boolean }) => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      const needle = text.trim();
+      while (walker.nextNode()) {
+        const node = walker.currentNode as Text;
+        const content = node.textContent?.trim() || "";
+        if (!content) continue;
+        const match = exact ? content === needle : content.includes(needle);
+        if (match && node.parentElement instanceof HTMLElement) {
+          node.parentElement.click();
           return true;
         }
       }
-    }
-    throw new Error(`Element containing text "${needle}" not found`);
-  },
-  fillSelector: ({ selector, text }: { selector: string; text: string }) => {
-    const element = document.querySelector<HTMLInputElement | HTMLTextAreaElement>(selector);
-    if (!element) throw new Error(`Selector not found: ${selector}`);
-    element.focus();
-    element.value = text;
-    element.dispatchEvent(new Event("input", { bubbles: true }));
-    element.dispatchEvent(new Event("change", { bubbles: true }));
-    return true;
-  },
-  typeText: ({ text }: { text: string }) => {
-    const active = document.activeElement as HTMLElement | null;
-    if (!active) throw new Error("No active element to type into");
-    if ("value" in active) {
-      const input = active as HTMLInputElement | HTMLTextAreaElement;
-      input.value += text;
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new Event("change", { bubbles: true }));
+      throw new Error(`Element containing text "${needle}" not found`);
+    },
+    fillSelector: ({ selector, text }: { selector: string; text: string }) => {
+      const element = document.querySelector<HTMLInputElement | HTMLTextAreaElement>(selector);
+      if (!element) throw new Error(`Selector not found: ${selector}`);
+      element.focus();
+      element.value = text;
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true }));
       return true;
-    }
-    active.dispatchEvent(
-      new InputEvent("beforeinput", {
-        inputType: "insertText",
-        data: text,
-        bubbles: true,
-      }),
-    );
-    active.textContent = (active.textContent || "") + text;
-    active.dispatchEvent(
-      new InputEvent("input", {
-        inputType: "insertText",
-        data: text,
-        bubbles: true,
-      }),
-    );
-    return true;
-  },
-  pressKey: ({ key }: { key: string }) => {
-    const active = document.activeElement || document.body;
-    ["keydown", "keypress", "keyup"].forEach((type) => {
-      const event = new KeyboardEvent(type, {
-        key,
-        bubbles: true,
-        cancelable: true,
+    },
+    typeText: ({ text }: { text: string }) => {
+      const active = document.activeElement as HTMLElement | null;
+      if (!active) throw new Error("No active element to type into");
+      if ('value' in active) {
+        const input = active as HTMLInputElement | HTMLTextAreaElement;
+        input.value += text;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        return true;
+      }
+      active.dispatchEvent(
+        new InputEvent('beforeinput', {
+          inputType: 'insertText',
+          data: text,
+          bubbles: true,
+        }),
+      );
+      active.textContent = (active.textContent || '') + text;
+      active.dispatchEvent(
+        new InputEvent('input', {
+          inputType: 'insertText',
+          data: text,
+          bubbles: true,
+        }),
+      );
+      return true;
+    },
+    pressKey: ({ key }: { key: string }) => {
+      const active = document.activeElement || document.body;
+      ['keydown', 'keypress', 'keyup'].forEach((type) => {
+        const event = new KeyboardEvent(type, {
+          key,
+          bubbles: true,
+          cancelable: true,
+        });
+        active.dispatchEvent(event);
       });
-      active.dispatchEvent(event);
-    });
-    return true;
-  },
-  moveMouse: ({ x, y }: { x: number; y: number }) => {
-    const target = document.elementFromPoint(x, y);
-    if (!target) throw new Error("No element at provided coordinates");
-    target.dispatchEvent(
-      new MouseEvent("mousemove", {
-        clientX: x,
-        clientY: y,
-        bubbles: true,
-        cancelable: true,
-        buttons: 0,
-      }),
-    );
-    return true;
-  },
-  clickMouse: ({ x, y }: { x: number; y: number }) => {
-    const target = document.elementFromPoint(x, y);
-    if (!target) throw new Error("No element at provided coordinates");
-    ["mousedown", "mouseup", "click"].forEach((type) => {
+      return true;
+    },
+    moveMouse: ({ x, y }: { x: number; y: number }) => {
+      const target = document.elementFromPoint(x, y);
+      if (!target) throw new Error('No element at provided coordinates');
       target.dispatchEvent(
-        new MouseEvent(type, {
+        new MouseEvent('mousemove', {
           clientX: x,
           clientY: y,
           bubbles: true,
           cancelable: true,
+          buttons: 0,
         }),
       );
-    });
-    return true;
-  },
-  dragMouse: ({ from, to }: { from: { x: number; y: number }; to: { x: number; y: number } }) => {
-    const start = document.elementFromPoint(from.x, from.y);
-    if (!start) throw new Error("No element at starting coordinates");
-    start.dispatchEvent(
-      new PointerEvent("pointerdown", {
-        clientX: from.x,
-        clientY: from.y,
-        bubbles: true,
-        cancelable: true,
-      }),
-    );
-    document.dispatchEvent(
-      new PointerEvent("pointermove", {
-        clientX: to.x,
-        clientY: to.y,
-        bubbles: true,
-        cancelable: true,
-      }),
-    );
-    const end = document.elementFromPoint(to.x, to.y) || document.body;
-    end.dispatchEvent(
-      new PointerEvent("pointerup", {
-        clientX: to.x,
-        clientY: to.y,
-        bubbles: true,
-        cancelable: true,
-      }),
-    );
-    return true;
-  },
-  getDomSnapshot: (params: any) => {
+      return true;
+    },
+    clickMouse: ({ x, y }: { x: number; y: number }) => {
+      const target = document.elementFromPoint(x, y);
+      if (!target) throw new Error('No element at provided coordinates');
+      ['mousedown', 'mouseup', 'click'].forEach((type) => {
+        target.dispatchEvent(
+          new MouseEvent(type, {
+            clientX: x,
+            clientY: y,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      });
+      return true;
+    },
+    dragMouse: ({ from, to }: { from: { x: number; y: number }; to: { x: number; y: number } }) => {
+      const start = document.elementFromPoint(from.x, from.y);
+      if (!start) throw new Error('No element at starting coordinates');
+      start.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          clientX: from.x,
+          clientY: from.y,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      document.dispatchEvent(
+        new PointerEvent('pointermove', {
+          clientX: to.x,
+          clientY: to.y,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      const end = document.elementFromPoint(to.x, to.y) || document.body;
+      end.dispatchEvent(
+        new PointerEvent('pointerup', {
+          clientX: to.x,
+          clientY: to.y,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      return true;
+    },
+    getDomSnapshot: (params: any) => {
     const { selector, clean, structure, limit } = params || {};
     const max = typeof limit === "number" ? limit : MAX_DOM_RETURN_CHARS;
 

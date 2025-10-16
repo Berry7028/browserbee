@@ -12,6 +12,7 @@ import {
   DialogInfo,
   DialogAction,
   DialogHandleResult,
+  ElementState,
 } from "./TabBridge";
 
 const NAVIGATION_TIMEOUT_MS = 15000;
@@ -262,5 +263,17 @@ export class ContentScriptTabBridge implements TabBridge {
     } catch {
       // ignore
     }
+  }
+
+  inspectSelector(selector: string): Promise<ElementState> {
+    return this.sendRequest("inspectSelector", { selector });
+  }
+
+  inspectByText(text: string, exact?: boolean): Promise<ElementState> {
+    return this.sendRequest("inspectByText", { text, exact });
+  }
+
+  getInputValue(selector: string): Promise<string | null> {
+    return this.sendRequest("getInputValue", { selector });
   }
 }
